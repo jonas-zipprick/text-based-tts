@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text } from 'react-konva';
+import { toast } from 'react-hot-toast';
+import { WallClipboardToast } from './WallClipboardToast';
 import useImage from 'use-image';
 import type { Campaign, Token, Point, Wall } from '../../../shared';
 import type { GameView } from '../types/types';
@@ -173,6 +175,10 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
     const isGM = view === 'dm' || view === 'editor';
     const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
+    // Wall Builder State
+    const [wallBuilderStart, setWallBuilderStart] = useState<{ x: number, y: number } | null>(null);
+    const [wallBuilderWalls, setWallBuilderWalls] = useState<Wall[]>([]);
+
     useEffect(() => {
         const handleResize = () => setSize({ width: window.innerWidth, height: window.innerHeight });
         window.addEventListener('resize', handleResize);
@@ -256,9 +262,11 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
     const [mousePos, setMousePos] = useState<MouseCoords>(null);
     const [dragStartPos, setDragStartPos] = useState<{ gridX: number, gridY: number } | null>(null);
 
-    // Reset explored areas when switching maps
+    // Reset explored areas and wall builder when switching maps
     useEffect(() => {
         setExploredPolys([]);
+        setWallBuilderWalls([]);
+        setWallBuilderStart(null);
     }, [activeMapId]);
 
 
@@ -328,12 +336,48 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
         });
     };
 
+    const handleStageClick = (e: any) => {
+        if (view !== 'editor') return;
+        const stage = e.target.getStage();
+        if (stage.isDragging()) return;
+
+        const pointer = stage.getPointerPosition();
+        if (!pointer) return;
+
+        const pixelX = (pointer.x - stagePos.x) / stageScale;
+        const pixelY = (pointer.y - stagePos.y) / stageScale;
+        const clickPoint = { x: Math.round(pixelX), y: Math.round(pixelY) };
+
+        if (!wallBuilderStart) {
+            setWallBuilderStart(clickPoint);
+            toast('Click endpoint to finish wall', { id: 'wall-hint', duration: 2000, icon: '✏️' });
+        } else {
+            const newWall: Wall = { start: wallBuilderStart, end: clickPoint };
+            const updatedWalls = [...wallBuilderWalls, newWall];
+            setWallBuilderWalls(updatedWalls);
+            setWallBuilderStart(null);
+
+            toast.custom((t) => (
+                <WallClipboardToast
+                    walls={updatedWalls}
+                    t={t}
+                    onClose={() => setWallBuilderWalls([])}
+                />
+            ), {
+                id: 'wall-builder',
+                duration: Infinity
+            });
+        }
+    };
+
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
             <Stage
                 width={size.width}
                 height={size.height}
                 draggable
+                onClick={handleStageClick}
+                onTap={handleStageClick}
                 onWheel={handleWheel}
                 onMouseMove={handleMouseMove}
                 onDragMove={handleMouseMove}
@@ -450,6 +494,74 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                                 </Group>
                             );
                         })}
+
+                        {/* Editor Lights */}
+                        {(activeMap.lights || []).map((light, i) => (
+                            <Group
+                                key={`light-${i}`}
+                                x={light.x * gridSize + gridSize / 2}
+                                y={light.y * gridSize + gridSize / 2}
+                            >
+                                {/* Range Circle */}
+                                <Circle
+                                    radius={light.radius * gridSize}
+                                    stroke={light.color || "#f1c40f"}
+                                    strokeWidth={1}
+                                    dash={[5, 5]}
+                                    opacity={0.6}
+                                    listening={false}
+                                />
+                                {/* Icon Background */}
+                                <Circle
+                                    radius={gridSize / 3}
+                                    fill="rgba(0,0,0,0.7)"
+                                    stroke="white"
+                                    strokeWidth={1}
+                                    listening={false}
+                                />
+                                {/* Light Bulb Icon */}
+                                <Text
+                                    text="💡"
+                                    fontSize={gridSize * 0.5}
+                                    x={-gridSize / 2}
+                                    y={-gridSize / 4}
+                                    width={gridSize}
+                                    align="center"
+                                    shadowColor="black"
+                                    shadowBlur={5}
+                                    listening={false}
+                                />
+                            </Group>
+                        ))}
+
+                        {/* Wall Builder Feedback */}
+                        {wallBuilderStart && (
+                            <Group>
+                                <Circle
+                                    x={wallBuilderStart.x}
+                                    y={wallBuilderStart.y}
+                                    radius={4}
+                                    fill="#e74c3c"
+                                    stroke="white"
+                                    strokeWidth={1}
+                                    listening={false}
+                                />
+                                {mousePos && (
+                                    <Line
+                                        points={[
+                                            wallBuilderStart.x,
+                                            wallBuilderStart.y,
+                                            mousePos.x,
+                                            mousePos.y
+                                        ]}
+                                        stroke="#e74c3c"
+                                        strokeWidth={2}
+                                        dash={[5, 5]}
+                                        listening={false}
+                                    />
+                                )}
+                            </Group>
+                        )}
                     </Layer>
                 )}
 
