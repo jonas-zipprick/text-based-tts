@@ -1,0 +1,37 @@
+tokens:
+  - id: 10002
+    name: "Rictavio"
+    picture: "pictures/roll20/max (21).webp"
+    controlled_by:
+      - sessionId: "123"
+    position:
+      - map: 0
+        x: 20
+        y: 16
+    visibility:
+      emit_light:
+        enabled: true
+        radius: 3
+        color: "#ffffff"
+      night_vision: true
+      view_distance: 12
+    stats:
+      ac: 16
+      hp: 24
+      speed: 30
+      attributes:
+        str: 16
+        dex: 12
+        con: 14
+        int: 10
+        wis: 12
+        cha: 8
+      actions:
+        - name: Longsword
+          modifiers:
+            attack: 5
+          reach: 5
+          targets: 1
+          hit: "1d8+3"
+          type: slashing
+          description: Versatile (1d10)
