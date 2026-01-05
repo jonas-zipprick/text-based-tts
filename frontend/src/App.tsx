@@ -7,7 +7,16 @@ function App() {
   const { campaign, loading, error, socket } = useCampaign();
   const [view, setView] = useState<GameView>('player');
   const [isDaytime, setIsDaytime] = useState(true);
-  const [sessionId, setSessionId] = useState("239981"); // Default to player 1
+
+  // Persistent Session ID
+  const [sessionId, setSessionId] = useState(() => {
+    const saved = localStorage.getItem('sessionId');
+    if (saved) return saved;
+    const generated = Math.floor(100000 + Math.random() * 900000).toString();
+    localStorage.setItem('sessionId', generated);
+    return generated;
+  });
+
   const [stageScale, setStageScale] = useState<number>(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
@@ -16,6 +25,10 @@ function App() {
       document.title = `${campaign.name} - TTS`;
     }
   }, [campaign]);
+
+  useEffect(() => {
+    localStorage.setItem('sessionId', sessionId);
+  }, [sessionId]);
 
   if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
   if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
