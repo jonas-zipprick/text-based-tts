@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text, Path } from 'react-konva';
 import { toast } from 'react-hot-toast';
 import { WallClipboardToast } from './WallClipboardToast';
 import { LightClipboardToast } from './LightClipboardToast';
@@ -113,27 +113,58 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
         >
             {showHp && (
                 <Group x={0} y={-10}>
+                    {/* AC Shield */}
+                    <Group x={2} y={3}>
+                        <Path
+                            data="M 0 0 L 12 0 L 12 9 C 12 14 6 17 0 17 C -6 17 -12 14 -12 9 L -12 0 Z"
+                            fill="#2c3e50"
+                            stroke="#bdc3c7"
+                            strokeWidth={1.5}
+                            x={0}
+                            y={-5}
+                            scaleX={0.7}
+                            scaleY={0.7}
+                            shadowColor="black"
+                            shadowBlur={2}
+                            shadowOpacity={0.5}
+                        />
+                        <Text
+                            text={(token.stats.ac ?? 10).toString()}
+                            x={-8.5}
+                            y={-3.5}
+                            width={17}
+                            align="center"
+                            fill="white"
+                            fontSize={8}
+                            fontStyle="bold"
+                            listening={false}
+                        />
+                    </Group>
+
+                    {/* Health Bar Background */}
                     <Rect
-                        x={2}
+                        x={12}
                         y={0}
-                        width={gridSize - 4}
+                        width={gridSize - 14}
                         height={6}
                         fill="#444"
                         cornerRadius={2}
                     />
+                    {/* Health Bar Foreground */}
                     <Rect
-                        x={2}
+                        x={12}
                         y={0}
-                        width={(gridSize - 4) * (curHp / maxHp)}
+                        width={(gridSize - 14) * (curHp / maxHp)}
                         height={6}
                         fill="#2ecc71"
                         cornerRadius={2}
                     />
+                    {/* HP Text */}
                     <Text
                         text={`${curHp}/${maxHp}`}
-                        x={0}
-                        y={- 2}
-                        width={gridSize}
+                        x={12}
+                        y={-2}
+                        width={gridSize - 14}
                         align="center"
                         fill="white"
                         fontSize={8}
