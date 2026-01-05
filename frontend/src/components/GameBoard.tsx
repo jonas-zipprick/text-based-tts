@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text } from 'react-konva';
 import useImage from 'use-image';
 import type { Campaign, Token, Point, Wall } from '../../../shared';
+import type { GameView } from '../types/types';
 import { calculateVisibilityPolygon, isPointInPolygon, unionPolygons, intersectPolygons } from '../utils/lighting';
 
 interface GameBoardProps {
     campaign: Campaign;
-    onTokenMove: (tokenId: number, position: { map: number, x: number, y: number }) => void;
-    isGM: boolean;
+    onTokenMove: (tokenId: number, position: { x: number, y: number, map: number }) => void;
+    view: GameView;
     isDaytime: boolean;
     sessionId: string;
     activeMapId: number;
@@ -20,8 +21,8 @@ interface GameBoardProps {
 type MouseCoords = {
     x: number;
     y: number;
-    gridX: number;
-    gridY: number;
+    gridX?: number; // Made optional
+    gridY?: number; // Made optional
     dragStart?: { gridX: number, gridY: number };
     distance?: number;
 } | null;
@@ -111,7 +112,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
                     <Text
                         text={`${curHp}/${maxHp}`}
                         x={0}
-                        y={-2}
+                        y={- 2}
                         width={gridSize}
                         align="center"
                         fill="white"
@@ -120,27 +121,29 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
                         shadowBlur={1}
                         listening={false}
                     />
-                </Group>
+                </Group >
             )}
-            {image ? (
-                <KonvaImage
-                    x={gridSize / 2 - radius}
-                    y={gridSize / 2 - radius}
-                    width={radius * 2}
-                    height={radius * 2}
-                    image={image}
-                    cornerRadius={radius}
-                />
-            ) : (
-                <Circle
-                    x={gridSize / 2}
-                    y={gridSize / 2}
-                    radius={radius}
-                    fill="white"
-                    stroke="black"
-                    strokeWidth={2}
-                />
-            )}
+            {
+                image ? (
+                    <KonvaImage
+                        x={gridSize / 2 - radius}
+                        y={gridSize / 2 - radius}
+                        width={radius * 2}
+                        height={radius * 2}
+                        image={image}
+                        cornerRadius={radius}
+                    />
+                ) : (
+                    <Circle
+                        x={gridSize / 2}
+                        y={gridSize / 2}
+                        radius={radius}
+                        fill="white"
+                        stroke="black"
+                        strokeWidth={2}
+                    />
+                )
+            }
             <Text
                 text={token.name}
                 x={0}
@@ -155,30 +158,16 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
                 shadowOpacity={1}
                 listening={false}
             />
-        </Group>
+        </Group >
     );
 };
 
-export const GameBoard: React.FC<GameBoardProps> = ({
-    campaign,
-    onTokenMove,
-    isGM,
-    isDaytime,
-    sessionId,
-    activeMapId,
-    stageScale,
-    setStageScale,
-    stagePos,
-    setStagePos
-}) => {
-    const activeMap = campaign.maps.find(m => m.id === activeMapId) || campaign.maps[0];
-
-    if (!activeMap) {
-        console.log("GameBoard: No active map found during render", campaign);
-        return <div>No map found</div>;
-    }
+export const GameBoard = ({ campaign, activeMapId, onTokenMove, view, isDaytime, sessionId, stageScale, setStageScale, stagePos, setStagePos }: GameBoardProps) => {
+    const activeMap = campaign.maps.find(m => m.id === activeMapId);
+    if (!activeMap) return <div className="text-white p-4">Map not found.</div>;
 
     const gridSize = activeMap.grid.cellSize;
+    const isGM = view === 'dm' || view === 'editor';
     const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
     useEffect(() => {
@@ -190,11 +179,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     // Compute dimensions
     const mapWidth = activeMap.grid.width * gridSize;
     const mapHeight = activeMap.grid.height * gridSize;
-
-
-    // ... imports
-
-    // ... (previous code)
 
     // Compute Visibility
     const visionPolys = useMemo(() => {
@@ -466,7 +450,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     zIndex: 1000
                 }}>
-                    {isGM && <div>Pixel: {mousePos.x}, {mousePos.y}</div>}
+                    {view === 'editor' && <div>Pixel: {mousePos.x}, {mousePos.y}</div>}
                     <div>Grid: {mousePos.gridX}, {mousePos.gridY}</div>
                     {mousePos.dragStart && (
                         <>

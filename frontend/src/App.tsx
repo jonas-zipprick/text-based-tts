@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
+import type { GameView } from './types/types';
 
 function App() {
   const { campaign, loading, error, socket } = useCampaign();
-  const [isGM, setIsGM] = useState(false);
+  const [view, setView] = useState<GameView>('player');
   const [isDaytime, setIsDaytime] = useState(true);
   const [sessionId, setSessionId] = useState("239981"); // Default to player 1
   const [stageScale, setStageScale] = useState<number>(1);
@@ -44,10 +45,15 @@ function App() {
             <option key={m.id} value={m.id}>{m.name}</option>
           ))}
         </select>
-        <label>
-          <input type="checkbox" checked={isGM} onChange={e => setIsGM(e.target.checked)} />
-          GM Mode
-        </label>
+        <select
+          value={view}
+          onChange={e => setView(e.target.value as GameView)}
+          className="text-black bg-white px-1"
+        >
+          <option value="player">Player View</option>
+          <option value="dm">DM View</option>
+          <option value="editor">Map Editor View</option>
+        </select>
         <label>
           <input type="checkbox" checked={isDaytime} onChange={e => setIsDaytime(e.target.checked)} />
           Daytime
@@ -65,7 +71,7 @@ function App() {
       <GameBoard
         campaign={campaign}
         onTokenMove={handleTokenMove}
-        isGM={isGM}
+        view={view}
         isDaytime={isDaytime}
         sessionId={sessionId}
         activeMapId={campaign.activeMapId}
