@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text } from 'react-konva';
 import useImage from 'use-image';
 import type { Campaign, Token, Point, Wall } from '../../../shared';
 import { calculateVisibilityPolygon, isPointInPolygon, unionPolygons, intersectPolygons } from '../utils/lighting';
@@ -35,58 +35,60 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
     const y = pos.y * gridSize;
     const radius = gridSize / 2 * 0.8;
 
-    const kArgs = {
-        draggable: true,
+    const handleDragEnd = (e: any) => {
+        const newX = Math.round(e.target.x() / gridSize);
+        const newY = Math.round(e.target.y() / gridSize);
+        onMove(token.id, newX, newY);
+
+        // Snap the group back to grid center
+        e.target.to({
+            x: newX * gridSize,
+            y: newY * gridSize,
+            duration: 0.1
+        });
     };
 
-    if (image) {
-        return (
-            <KonvaImage
-                x={x + gridSize / 2 - radius}
-                y={y + gridSize / 2 - radius}
-                width={radius * 2}
-                height={radius * 2}
-                image={image}
-                cornerRadius={radius}
-                {...kArgs}
-                onDragEnd={(e) => {
-                    const newX = Math.round((e.target.x() - (gridSize / 2 - radius)) / gridSize);
-                    const newY = Math.round((e.target.y() - (gridSize / 2 - radius)) / gridSize);
-                    onMove(token.id, newX, newY);
-
-                    // Snap back to grid center
-                    e.target.to({
-                        x: newX * gridSize + gridSize / 2 - radius,
-                        y: newY * gridSize + gridSize / 2 - radius,
-                        duration: 0.1
-                    });
-                }}
-            />
-        );
-    }
-
     return (
-        <Circle
-            x={x + gridSize / 2}
-            y={y + gridSize / 2}
-            radius={radius}
-            fill="white"
-            stroke="black"
-            strokeWidth={2}
-            {...kArgs}
-            onDragEnd={(e) => {
-                const newX = Math.round((e.target.x() - gridSize / 2) / gridSize);
-                const newY = Math.round((e.target.y() - gridSize / 2) / gridSize);
-                onMove(token.id, newX, newY);
-
-                // Snap back to grid center
-                e.target.to({
-                    x: newX * gridSize + gridSize / 2,
-                    y: newY * gridSize + gridSize / 2,
-                    duration: 0.1
-                });
-            }}
-        />
+        <Group
+            x={x}
+            y={y}
+            draggable
+            onDragEnd={handleDragEnd}
+        >
+            {image ? (
+                <KonvaImage
+                    x={gridSize / 2 - radius}
+                    y={gridSize / 2 - radius}
+                    width={radius * 2}
+                    height={radius * 2}
+                    image={image}
+                    cornerRadius={radius}
+                />
+            ) : (
+                <Circle
+                    x={gridSize / 2}
+                    y={gridSize / 2}
+                    radius={radius}
+                    fill="white"
+                    stroke="black"
+                    strokeWidth={2}
+                />
+            )}
+            <Text
+                text={token.name}
+                x={0}
+                y={gridSize / 2 + radius + 2}
+                width={gridSize}
+                align="center"
+                fill="white"
+                fontSize={12}
+                shadowColor="black"
+                shadowBlur={2}
+                shadowOffset={{ x: 1, y: 1 }}
+                shadowOpacity={1}
+                listening={false}
+            />
+        </Group>
     );
 };
 
