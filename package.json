@@ -11,9 +11,11 @@
     "dev:server": "npm run dev --workspace=server",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:frontend\"",
-    "test": "npm test --workspaces --if-present"
+    "test": "npm test --workspaces --if-present",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^8.0.0"
+    "concurrently": "^8.0.0",
+    "husky": "^9.1.7"
   }
 }
