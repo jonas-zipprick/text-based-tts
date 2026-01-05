@@ -206,6 +206,31 @@ export class CampaignManager {
         }
     }
 
+    public removeToken(tokenId: number) {
+        const filePath = this.tokenSourceMap.get(tokenId);
+        if (!filePath) return;
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+            const tokens = doc.get('tokens') as YAMLSeq;
+            if (!tokens || !isCollection(tokens)) return;
+
+            const indexToRemove = tokens.items.findIndex((item: any) => {
+                const id = item.get ? item.get('id') : item.id;
+                return id === tokenId;
+            });
+
+            if (indexToRemove !== -1) {
+                tokens.delete(indexToRemove);
+                fs.writeFileSync(filePath, doc.toString());
+                this.tokenSourceMap.delete(tokenId);
+            }
+        } catch (e) {
+            console.error(`Error removing token:`, e);
+        }
+    }
+
     public watch(callback: (campaign: Campaign) => void) {
         if (this.watcher) this.watcher.close();
 

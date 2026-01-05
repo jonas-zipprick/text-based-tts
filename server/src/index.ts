@@ -148,6 +148,10 @@ io.on('connection', (socket) => {
             }
         }
     });
+
+    socket.on('remove-token', (data: { tokenId: number }) => {
+        campaignManager.removeToken(data.tokenId);
+    });
 });
 
 const PORT = 3000;

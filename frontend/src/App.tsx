@@ -114,6 +114,12 @@ function App() {
     }
   }, [socket]);
 
+  const handleRemoveToken = useCallback((tokenId: number) => {
+    if (socket) {
+      socket.emit('remove-token', { tokenId });
+    }
+  }, [socket]);
+
   const hasControlledTokens = useMemo(() => {
     if (!campaign) return false;
     return campaign.tokens.some(t => t.controlled_by?.some(c => c.sessionId === sessionId));
@@ -181,6 +187,7 @@ function App() {
         onRemoveWall={handleRemoveWall}
         onRemoveLight={handleRemoveLight}
         onAddToken={handleAddToken}
+        onRemoveToken={handleRemoveToken}
       />
       {selectedToken && (
         <CharacterSheet

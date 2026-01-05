@@ -25,6 +25,7 @@ interface GameBoardProps {
     onRemoveWall: (mapId: number, wall: Wall) => void;
     onRemoveLight: (mapId: number, light: Light) => void;
     onAddToken: (blueprintId: number, mapId: number, x: number, y: number) => void;
+    onRemoveToken: (tokenId: number) => void;
 }
 
 type MouseCoords = {
@@ -179,7 +180,7 @@ export const GameBoard = (props: GameBoardProps) => {
     const {
         campaign, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId,
         activeMapId, stageScale, setStageScale, stagePos, setStagePos,
-        onAddWalls, onAddLights, onRemoveWall, onRemoveLight, onAddToken
+        onAddWalls, onAddLights, onRemoveWall, onRemoveLight, onAddToken, onRemoveToken
     } = props;
 
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
@@ -383,6 +384,7 @@ export const GameBoard = (props: GameBoardProps) => {
         const clickPoint = { x: Math.round(pixelX), y: Math.round(pixelY) };
 
         if (activeTool === 'wall') {
+            // ... (existing wall logic)
             if (!wallBuilderStart) {
                 setWallBuilderStart(clickPoint);
                 toast('Click endpoint to finish wall', { id: 'wall-hint', duration: 2000, icon: '✏️' });
@@ -410,6 +412,7 @@ export const GameBoard = (props: GameBoardProps) => {
                 });
             }
         } else if (activeTool === 'light') {
+            // ... (existing light logic)
             const newLight: Light = { x: gridX, y: gridY, radius: 6, color: '#f1c40f' }; // Reverted to original defaults
             const updatedLights = [...lightBuilderLights, newLight];
             setLightBuilderLights(updatedLights);
@@ -431,33 +434,47 @@ export const GameBoard = (props: GameBoardProps) => {
                 duration: Infinity
             });
         } else if (activeTool === 'trash') {
-            const activeMap = campaign.maps.find(m => m.id === activeMapId);
-            if (!activeMap) return;
-
-            // Check lights first (they are smaller targets)
-            const hitLight = activeMap.lights?.find(l => {
-                const centerX = l.x * gridSize + gridSize / 2;
-                const centerY = l.y * gridSize + gridSize / 2;
+            // New logic: check for tokens first
+            const hitToken = campaign.tokens.find(t => {
+                if (!t.position) return false;
+                const pos = t.position.find(p => p.map === activeMapId);
+                if (!pos) return false;
+                const centerX = pos.x * gridSize + gridSize / 2;
+                const centerY = pos.y * gridSize + gridSize / 2;
                 const dist = Math.sqrt((clickPoint.x - centerX) ** 2 + (clickPoint.y - centerY) ** 2);
-                return dist < 20; // Increased hit radius for easier clicking
+                return dist < gridSize / 2;
             });
 
-            if (hitLight) {
-                onRemoveLight(activeMapId, hitLight);
+            if (hitToken) {
+                onRemoveToken(hitToken.id);
                 return;
             }
 
-            // Check walls
-            const wallScaler = activeMap.wallUnit === 'pixel' ? 1 : gridSize;
-            const hitWall = activeMap.walls?.find(w => {
-                const start = { x: w.start.x * wallScaler, y: w.start.y * wallScaler };
-                const end = { x: w.end.x * wallScaler, y: w.end.y * wallScaler };
-                const dist = getDistanceToSegment(clickPoint, start, end);
-                return dist < 15; // Increased tolerance for clicking wall lines
-            });
+            // Fallback: check lights and walls (Map Editor only)
+            if (view === 'editor') {
+                const hitLight = activeMap.lights?.find(l => {
+                    const centerX = l.x * gridSize + gridSize / 2;
+                    const centerY = l.y * gridSize + gridSize / 2;
+                    const dist = Math.sqrt((clickPoint.x - centerX) ** 2 + (clickPoint.y - centerY) ** 2);
+                    return dist < 20;
+                });
 
-            if (hitWall) {
-                onRemoveWall(activeMapId, hitWall);
+                if (hitLight) {
+                    onRemoveLight(activeMapId, hitLight);
+                    return;
+                }
+
+                const wallScaler = activeMap.wallUnit === 'pixel' ? 1 : gridSize;
+                const hitWall = activeMap.walls?.find(w => {
+                    const start = { x: w.start.x * wallScaler, y: w.start.y * wallScaler };
+                    const end = { x: w.end.x * wallScaler, y: w.end.y * wallScaler };
+                    const dist = getDistanceToSegment(clickPoint, start, end);
+                    return dist < 15;
+                });
+
+                if (hitWall) {
+                    onRemoveWall(activeMapId, hitWall);
+                }
             }
         } else if (activeTool === 'npc' && selectedBlueprint) {
             onAddToken(selectedBlueprint.id, activeMapId, gridX, gridY);
@@ -715,15 +732,15 @@ export const GameBoard = (props: GameBoardProps) => {
                             >
                                 💡
                             </button>
-                            <button
-                                className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'trash' ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
-                                onClick={() => setActiveTool('trash')}
-                                title="Trash Tool"
-                            >
-                                🗑️
-                            </button>
                         </>
                     )}
+                    <button
+                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'trash' ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                        onClick={() => setActiveTool('trash')}
+                        title="Trash Tool"
+                    >
+                        🗑️
+                    </button>
                     <button
                         onClick={() => {
                             setActiveTool('npc');
