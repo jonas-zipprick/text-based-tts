@@ -188,6 +188,7 @@ function App() {
         onRemoveLight={handleRemoveLight}
         onAddToken={handleAddToken}
         onRemoveToken={handleRemoveToken}
+        onTokenUpdate={handleTokenStatsUpdate}
       />
       {selectedToken && (
         <CharacterSheet

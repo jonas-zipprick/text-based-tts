@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text } from 'react-konva';
 import { toast } from 'react-hot-toast';
 import { WallClipboardToast } from './WallClipboardToast';
@@ -26,6 +26,7 @@ interface GameBoardProps {
     onRemoveLight: (mapId: number, light: Light) => void;
     onAddToken: (blueprintId: number, mapId: number, x: number, y: number) => void;
     onRemoveToken: (tokenId: number) => void;
+    onTokenUpdate: (tokenId: number, updates: Partial<Token>) => void;
 }
 
 type MouseCoords = {
@@ -44,14 +45,15 @@ const BackgroundImage = ({ src, width, height }: { src: string, width: number, h
     return <KonvaImage image={image} width={width} height={height} />;
 };
 
-const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onDragEnd, onDoubleClick }: {
+const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onDragEnd, onDoubleClick, onHover }: {
     token: Token,
     gridSize: number,
     onMove: (id: number, x: number, y: number) => void,
     activeMapId: number,
     onDragStart?: (gridX: number, gridY: number) => void,
     onDragEnd?: () => void,
-    onDoubleClick?: (token: Token) => void
+    onDoubleClick?: (token: Token) => void,
+    onHover?: (tokenId: number | null) => void
 }) => {
     const pos = token.position?.find(p => p.map === activeMapId);
     if (!pos) return null;
@@ -99,8 +101,14 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
             draggable
             onDragStart={handleDragStartInternal}
             onDragEnd={handleDragEndInternal}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() => {
+                setIsHovered(true);
+                onHover?.(token.id);
+            }}
+            onMouseLeave={() => {
+                setIsHovered(false);
+                onHover?.(null);
+            }}
             onDblClick={() => onDoubleClick?.(token)}
         >
             {showHp && (
@@ -181,7 +189,7 @@ export const GameBoard = (props: GameBoardProps) => {
     const {
         campaign, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId,
         activeMapId, stageScale, setStageScale, stagePos, setStagePos,
-        onAddWalls, onAddLights, onRemoveWall, onRemoveLight, onAddToken, onRemoveToken
+        onAddWalls, onAddLights, onRemoveWall, onRemoveLight, onAddToken, onRemoveToken, onTokenUpdate
     } = props;
 
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
@@ -283,6 +291,81 @@ export const GameBoard = (props: GameBoardProps) => {
     const [exploredPolys, setExploredPolys] = useState<Point[][]>([]);
     const [mousePos, setMousePos] = useState<MouseCoords>(null);
     const [dragStartPos, setDragStartPos] = useState<{ gridX: number, gridY: number } | null>(null);
+
+    // Quick HP Adjustment State
+    const [hoveredTokenId, setHoveredTokenId] = useState<number | null>(null);
+    const [quickHpValue, setQuickHpValue] = useState('');
+    const [quickHpPos, setQuickHpPos] = useState<{ x: number, y: number } | null>(null);
+    const quickHpTimerRef = useRef<any>(null);
+    // Alternatively, use window.setTimeout type: const quickHpTimerRef = useRef<number | null>(null);
+
+    const applyQuickHp = useCallback(() => {
+        if (!hoveredTokenId || !quickHpValue) return;
+
+        const token = campaign.tokens.find(t => t.id === hoveredTokenId);
+        if (!token) return;
+
+        const change = parseInt(quickHpValue, 10);
+        if (isNaN(change)) {
+            setQuickHpValue('');
+            setQuickHpPos(null);
+            return;
+        }
+
+        const currentHp = token.currentHp ?? token.stats.hp;
+        const maxHp = token.stats.hp;
+
+        let newHp: number;
+        if (quickHpValue.startsWith('+') || quickHpValue.startsWith('-')) {
+            newHp = currentHp + change;
+        } else {
+            newHp = change;
+        }
+
+        newHp = Math.max(0, Math.min(newHp, maxHp));
+        onTokenUpdate(hoveredTokenId, { currentHp: newHp });
+
+        setQuickHpValue('');
+        setQuickHpPos(null);
+    }, [hoveredTokenId, quickHpValue, campaign.tokens, onTokenUpdate]);
+
+    const applyQuickHpRef = useRef(applyQuickHp);
+    useEffect(() => {
+        applyQuickHpRef.current = applyQuickHp;
+    }, [applyQuickHp]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if in an input or textarea
+            if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+            if (hoveredTokenId !== null) {
+                if (['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
+                    setQuickHpValue(prev => prev + e.key);
+                    if (mousePos) {
+                        setQuickHpPos({ x: mousePos.x, y: mousePos.y });
+                    }
+
+                    if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
+                    quickHpTimerRef.current = setTimeout(() => {
+                        applyQuickHpRef.current();
+                    }, 1500);
+                } else if (e.key === 'Enter') {
+                    if (quickHpValue) {
+                        if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
+                        applyQuickHp();
+                    }
+                } else if (e.key === 'Escape' || e.key === 'Backspace') {
+                    setQuickHpValue('');
+                    setQuickHpPos(null);
+                    if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [hoveredTokenId, mousePos, applyQuickHp]);
 
     // Reset explored areas and wall builder when switching maps
     useEffect(() => {
@@ -564,12 +647,41 @@ export const GameBoard = (props: GameBoardProps) => {
                                         onDragStart={(gx, gy) => setDragStartPos({ gridX: gx, gridY: gy })}
                                         onDragEnd={() => setDragStartPos(null)}
                                         onDoubleClick={onTokenDoubleClick}
+                                        onHover={setHoveredTokenId}
                                     />
                                 );
                             }
                         }
                         return null;
                     })}
+                </Layer>
+
+                {/* Quick HP UI Layer */}
+                <Layer>
+                    {quickHpPos && quickHpValue && (
+                        <Group x={quickHpPos.x - 40} y={quickHpPos.y}>
+                            <Rect
+                                x={0}
+                                y={-25}
+                                width={80}
+                                height={24}
+                                fill="rgba(88, 24, 13, 0.9)"
+                                stroke="#fdf1dc"
+                                strokeWidth={2}
+                                cornerRadius={4}
+                            />
+                            <Text
+                                x={0}
+                                y={-22}
+                                width={80}
+                                text={`${quickHpValue} hp`}
+                                fill="#fdf1dc"
+                                fontSize={16}
+                                fontStyle="bold"
+                                align="center"
+                            />
+                        </Group>
+                    )}
                 </Layer>
 
                 {/* Editor Walls Layer */}
