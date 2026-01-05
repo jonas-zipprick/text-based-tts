@@ -16,7 +16,14 @@ export const WallClipboardToast: React.FC<WallClipboardToastProps> = ({ walls, t
     ).join('\n');
 
     return (
-        <div className="bg-zinc-800 border border-zinc-600 rounded-lg p-4 shadow-xl text-white max-w-sm w-full pointer-events-auto relative font-sans">
+        <div
+            className="bg-zinc-800 border border-zinc-600 rounded-lg p-4 shadow-xl text-white max-w-sm w-full pointer-events-auto relative font-sans"
+            style={{
+                opacity: t.visible ? 1 : 0,
+                transform: t.visible ? 'translateY(0)' : 'translateY(-20px)',
+                transition: 'all 0.3s ease-in-out'
+            }}
+        >
             <button
                 className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors text-lg line-height-none"
                 onClick={() => {
