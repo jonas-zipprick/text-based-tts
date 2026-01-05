@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Token } from '../../../shared';
+import toast from 'react-hot-toast';
 import './CharacterSheet.css';
 
 interface CharacterSheetProps {
@@ -131,32 +132,99 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     // Build description string
     const description = [localToken.size, localToken.type, localToken.alignment].filter(Boolean).join(' ').toLowerCase() || localToken.description;
 
-    // Toast state
-    const [toast, setToast] = useState<{ visible: boolean; header: string; message: string; type: 'normal' | 'crit' | 'fail' }>({
-        visible: false,
-        header: '',
-        message: '',
-        type: 'normal'
-    });
+    const parseDice = (formula: string): { roll: number, text: string } | null => {
+        // Extract inner formula if in parens e.g. "5 (1d8 + 1)" -> "1d8 + 1"
+        const parenMatch = formula.match(/\(([^)]+)\)/);
+        const target = parenMatch ? parenMatch[1] : formula;
 
-    const showToast = (header: string, message: string, type: 'normal' | 'crit' | 'fail' = 'normal') => {
-        setToast({ visible: true, header, message, type });
-        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+        // Parse NdS+M or NdS-M
+        // Allow spaces
+        const match = target.match(/(\d+)d(\d+)\s*([+-])?\s*(\d+)?/);
+        if (match) {
+            const count = parseInt(match[1], 10);
+            const sides = parseInt(match[2], 10);
+            const sign = match[3] === '-' ? -1 : 1;
+            const mod = match[4] ? parseInt(match[4], 10) : 0;
+
+            let total = 0;
+            const rolls = [];
+            for (let i = 0; i < count; i++) {
+                const r = Math.floor(Math.random() * sides) + 1;
+                rolls.push(r);
+                total += r;
+            }
+            total += (sign * mod);
+
+            return {
+                roll: total,
+                text: `${rolls.join('+')}${mod !== 0 ? (sign === 1 ? '+' : '-') + mod : ''}`
+            };
+        }
+        // Fallback: try parsing as simple integer
+        const staticVal = parseInt(target, 10);
+        if (!isNaN(staticVal)) return { roll: staticVal, text: 'Static' };
+
+        return null;
     };
 
-    const handleActionClick = (action: any) => { // Using any for TokenAction temporarily to avoid import loops if needed, but safe here
+    const handleActionClick = (action: any) => {
         if (action.modifiers?.attack !== undefined) {
-            const roll = Math.floor(Math.random() * 20) + 1;
-            const total = roll + action.modifiers.attack;
+            // Attack Roll
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const attackMod = action.modifiers.attack;
+            const attackTotal = d20 + attackMod;
+
             let type: 'normal' | 'crit' | 'fail' = 'normal';
+            if (d20 === 20) type = 'crit';
+            if (d20 === 1) type = 'fail';
 
-            if (roll === 20) type = 'crit';
-            if (roll === 1) type = 'fail';
+            const attackSign = attackMod >= 0 ? '+' : '';
 
-            const sign = action.modifiers.attack >= 0 ? '+' : '';
-            const msg = `Roll: ${roll} ${sign}${action.modifiers.attack} = ${total}`;
+            // Damage Roll
+            let damageResult = null;
+            if (action.hit) {
+                damageResult = parseDice(action.hit);
+            }
 
-            showToast(`${action.name} Attack`, msg, type);
+            const content = (
+                <>
+                    <div className="cs-toast-token">{localToken.name}</div>
+                    <div className="cs-toast-header">{action.name}</div>
+                    <div className="cs-toast-row">
+                        Attack: <strong>{attackTotal}</strong>
+                        <span className="cs-toast-detail">({d20}{attackSign}{attackMod})</span>
+                    </div>
+                    {damageResult && (
+                        <div className="cs-toast-row">
+                            Damage: <strong>{damageResult.roll}</strong>
+                            <span className="cs-toast-detail">{action.type}</span>
+                        </div>
+                    )}
+                </>
+            );
+
+            toast.custom((t) => (
+                <div
+                    className={`cs-toast ${type}`}
+                    style={{
+                        opacity: t.visible ? 1 : 0,
+                        transform: t.visible ? 'translateY(0)' : 'translateY(20px)',
+                        transition: 'all 0.3s ease-out',
+                        position: 'relative' // Ensure relative for close button
+                    }}
+                >
+                    <button
+                        className="cs-toast-close"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toast.dismiss(t.id);
+                        }}
+                    >
+                        ×
+                    </button>
+                    {content}
+                </div>
+            ), { duration: 4000 });
         }
     };
 
@@ -424,11 +492,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     )}
                 </div>
 
-                {/* Toast Notification */}
-                <div className={`cs-toast ${toast.visible ? 'visible' : ''} ${toast.type}`}>
-                    <div className="cs-toast-header">{toast.header}</div>
-                    <div className="cs-toast-result">{toast.message}</div>
-                </div>
+
             </div>
         </div>
     );

@@ -316,39 +316,37 @@
 
 /* Toast Notification */
 .cs-toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    left: auto;
-    transform: none;
     background-color: #58180d;
     color: #fdf1dc;
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 8px 12px;
+    /* Tighter padding */
+    border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     font-family: 'Libre Baskerville', serif;
-    font-size: 16px;
-    text-align: center;
-    z-index: 1000;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    font-size: 14px;
+    /* Smaller base font */
+    text-align: left;
+    /* Left align */
+    width: 260px;
+    /* Narrower */
+    pointer-events: auto;
 }
 
 .cs-toast.visible {
-    opacity: 1;
-    transform: translateY(0);
+    /* Legacy */
 }
 
 .cs-toast-header {
-    font-size: 12px;
+    font-size: 13px;
+    /* Smaller */
     text-transform: uppercase;
-    opacity: 0.8;
+    opacity: 0.9;
     margin-bottom: 4px;
+    font-weight: bold;
 }
 
 .cs-toast-result {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: bold;
 }
 
@@ -362,4 +360,53 @@
     background-color: #8b0000;
     /* Red */
     border: 2px solid #000;
+}
+
+.cs-toast-token {
+    font-size: 11px;
+    /* Smaller */
+    font-weight: bold;
+    /* Bold sender name */
+    font-style: normal;
+    opacity: 1;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+    color: #ffd700;
+    /* Gold-ish accent for name */
+}
+
+.cs-toast-row {
+    font-size: 15px;
+    /* Smaller result text */
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* Left align rows */
+    gap: 6px;
+}
+
+.cs-toast-close {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.5;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+
+.cs-toast-close:hover {
+    opacity: 1;
+}
+
+.cs-toast-detail {
+    font-size: 0.8em;
+    opacity: 0.8;
+    font-weight: normal;
 }

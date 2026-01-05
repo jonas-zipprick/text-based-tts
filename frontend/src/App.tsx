@@ -6,8 +6,11 @@ import './components/Navbar.css';
 import type { GameView } from './types/types';
 import type { Token } from '../../shared';
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   const { campaign, loading, error, socket } = useCampaign();
+
   const [view, setView] = useState<GameView>('player');
   const [isDaytime, setIsDaytime] = useState(true);
 
@@ -132,6 +135,7 @@ function App() {
           onUpdate={handleTokenStatsUpdate}
         />
       )}
+      <Toaster position="bottom-right" reverseOrder={false} />
     </div>
   );
 }
