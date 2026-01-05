@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
@@ -84,6 +84,11 @@ function App() {
     }
   }, [socket]);
 
+  const hasControlledTokens = useMemo(() => {
+    if (!campaign) return false;
+    return campaign.tokens.some(t => t.controlled_by?.some(c => c.sessionId === sessionId));
+  }, [campaign, sessionId]);
+
   if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
   if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
   if (!campaign) { console.log("App: No Campaign"); return <div className="text-white p-4">No campaign data.</div>; }
@@ -149,6 +154,19 @@ function App() {
           onUpdate={handleTokenStatsUpdate}
           onRoll={handleRoll}
         />
+      )}
+      {view === 'player' && !hasControlledTokens && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-zinc-800 border border-zinc-600 p-6 rounded-lg shadow-2xl text-center pointer-events-auto max-w-lg">
+            <h2 className="text-xl font-bold text-yellow-400 mb-3">No Assigned Token</h2>
+            <p className="text-gray-200 mb-4 text-lg">
+              The server admin has to set up a user for you to be able to see anything.
+            </p>
+            <div className="text-sm text-gray-400 bg-black/30 p-2 rounded inline-block">
+              Session ID: <span className="font-mono text-white ml-2">{sessionId}</span>
+            </div>
+          </div>
+        </div>
       )}
       <Toaster position="bottom-right" reverseOrder={false} />
     </div>
