@@ -1,6 +1,7 @@
+bestiary
 node_modules
 dist/
-campaign/
+campaign
 coverage/
 .DS_Store
 .env
