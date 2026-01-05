@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
+import { CharacterSheet } from './components/CharacterSheet';
 import type { GameView } from './types/types';
+import type { Token } from '../../shared';
 
 function App() {
   const { campaign, loading, error, socket } = useCampaign();
@@ -19,6 +21,7 @@ function App() {
 
   const [stageScale, setStageScale] = useState<number>(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
   useEffect(() => {
     if (campaign) {
@@ -29,6 +32,16 @@ function App() {
   useEffect(() => {
     localStorage.setItem('sessionId', sessionId);
   }, [sessionId]);
+
+  // Keep selected token in sync with campaign updates
+  useEffect(() => {
+    if (selectedToken && campaign) {
+      const updatedToken = campaign.tokens.find(t => t.id === selectedToken.id);
+      if (updatedToken && JSON.stringify(updatedToken) !== JSON.stringify(selectedToken)) {
+        setSelectedToken(updatedToken);
+      }
+    }
+  }, [campaign, selectedToken]);
 
   if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
   if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
@@ -43,6 +56,16 @@ function App() {
   const handleMapChange = (newMapId: number) => {
     if (socket && newMapId !== campaign.activeMapId) {
       socket.emit('change-map', { newMapId });
+    }
+  };
+
+  const handleTokenDoubleClick = (token: Token) => {
+    setSelectedToken(token);
+  };
+
+  const handleTokenStatsUpdate = (tokenId: number, updates: Partial<Token>) => {
+    if (socket) {
+      socket.emit('token-update-stats', { tokenId, updates });
     }
   };
 
@@ -84,6 +107,7 @@ function App() {
       <GameBoard
         campaign={campaign}
         onTokenMove={handleTokenMove}
+        onTokenDoubleClick={handleTokenDoubleClick}
         view={view}
         isDaytime={isDaytime}
         sessionId={sessionId}
@@ -93,6 +117,13 @@ function App() {
         stagePos={stagePos}
         setStagePos={setStagePos}
       />
+      {selectedToken && (
+        <CharacterSheet
+          token={selectedToken}
+          onClose={() => setSelectedToken(null)}
+          onUpdate={handleTokenStatsUpdate}
+        />
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { calculateVisibilityPolygon, isPointInPolygon, unionPolygons, intersectP
 interface GameBoardProps {
     campaign: Campaign;
     onTokenMove: (tokenId: number, position: { x: number, y: number, map: number }) => void;
+    onTokenDoubleClick?: (token: Token) => void;
     view: GameView;
     isDaytime: boolean;
     sessionId: string;
@@ -34,13 +35,14 @@ const BackgroundImage = ({ src, width, height }: { src: string, width: number, h
     return <KonvaImage image={image} width={width} height={height} />;
 };
 
-const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onDragEnd }: {
+const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onDragEnd, onDoubleClick }: {
     token: Token,
     gridSize: number,
     onMove: (id: number, x: number, y: number) => void,
     activeMapId: number,
     onDragStart?: (gridX: number, gridY: number) => void,
-    onDragEnd?: () => void
+    onDragEnd?: () => void,
+    onDoubleClick?: (token: Token) => void
 }) => {
     const pos = token.position?.find(p => p.map === activeMapId);
     if (!pos) return null;
@@ -90,6 +92,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
             onDragEnd={handleDragEndInternal}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            onDblClick={() => onDoubleClick?.(token)}
         >
             {showHp && (
                 <Group x={0} y={-10}>
@@ -162,7 +165,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
     );
 };
 
-export const GameBoard = ({ campaign, activeMapId, onTokenMove, view, isDaytime, sessionId, stageScale, setStageScale, stagePos, setStagePos }: GameBoardProps) => {
+export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId, stageScale, setStageScale, stagePos, setStagePos }: GameBoardProps) => {
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
     if (!activeMap) return <div className="text-white p-4">Map not found.</div>;
 
@@ -404,6 +407,7 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, view, isDaytime,
                                         activeMapId={activeMap.id}
                                         onDragStart={(gx, gy) => setDragStartPos({ gridX: gx, gridY: gy })}
                                         onDragEnd={() => setDragStartPos(null)}
+                                        onDoubleClick={onTokenDoubleClick}
                                     />
                                 );
                             }

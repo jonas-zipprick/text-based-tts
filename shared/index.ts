@@ -32,12 +32,43 @@ export type MapData = {
     lights: Light[];
 };
 
+export type TokenAction = {
+    name: string;
+    description?: string;
+    modifiers?: {
+        attack?: number;
+    };
+    reach?: number;
+    range?: number;
+    targets?: number;
+    hit?: string;
+    type?: string;
+};
+
+export type TokenTrait = {
+    name: string;
+    description: string;
+};
+
 export type TokenStats = {
     ac: number;
+    acType?: string; // e.g., "natural armor"
     hp: number;
+    hpFormula?: string; // e.g., "17d20 + 85"
     speed: number;
     attributes: Record<string, number>;
-    actions?: any[];
+    savingThrows?: Record<string, number>;
+    skills?: Record<string, number>;
+    damageResistances?: string[];
+    damageImmunities?: string[];
+    conditionImmunities?: string[];
+    senses?: string;
+    languages?: string;
+    challenge?: number;
+    xp?: number;
+    traits?: TokenTrait[];
+    actions?: TokenAction[];
+    legendaryActions?: TokenTrait[];
 };
 
 export type TokenVisibility = {
@@ -54,6 +85,10 @@ export type Token = {
     id: number;
     name: string;
     picture: string;
+    description?: string; // e.g., "Gargantuan construct, unaligned"
+    size?: string; // e.g., "Gargantuan"
+    type?: string; // e.g., "construct"
+    alignment?: string; // e.g., "unaligned"
     controlled_by: { sessionId: string }[];
     position?: {
         map: number;

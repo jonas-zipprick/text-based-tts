@@ -66,6 +66,26 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('token-update-stats', (data: { tokenId: number, updates: Record<string, any> }) => {
+        const campaign = campaignManager.getCampaign();
+        if (campaign) {
+            const token = campaign.tokens.find(t => t.id === data.tokenId);
+            if (token) {
+                // Apply updates to in-memory token
+                Object.assign(token, data.updates);
+                if (data.updates.stats) {
+                    Object.assign(token.stats, data.updates.stats);
+                }
+
+                // Broadcast optimistic update
+                io.emit('campaign-update', campaign);
+
+                // Persist to disk
+                campaignManager.updateTokenStats(data.tokenId, data.updates);
+            }
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('user disconnected', socket.id);
     });

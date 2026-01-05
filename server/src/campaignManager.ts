@@ -151,6 +151,74 @@ export class CampaignManager {
         }
     }
 
+    public updateTokenStats(tokenId: number, updates: Record<string, any>) {
+        const filePath = this.tokenSourceMap.get(tokenId);
+        if (!filePath) {
+            console.error(`Source file for token ${tokenId} not found.`);
+            return;
+        }
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+
+            const tokens = doc.get('tokens') as YAMLSeq;
+            if (!tokens) return;
+
+            const tokenItem = tokens.items.find((item: any) => {
+                const id = item.get ? item.get('id') : item.id;
+                return id === tokenId;
+            }) as YAMLMap;
+
+            if (tokenItem) {
+                // Helper to set nested values
+                const setNestedValue = (obj: YAMLMap, path: string[], value: any) => {
+                    if (path.length === 1) {
+                        obj.set(path[0], value);
+                        return;
+                    }
+
+                    let current = obj.get(path[0]) as YAMLMap;
+                    if (!current) {
+                        // Create the nested object if it doesn't exist
+                        obj.set(path[0], {});
+                        current = obj.get(path[0]) as YAMLMap;
+                    }
+
+                    // For stats and other nested objects
+                    if (path.length === 2) {
+                        if (current.set) {
+                            current.set(path[1], value);
+                        }
+                    }
+                };
+
+                // Apply updates
+                for (const [key, value] of Object.entries(updates)) {
+                    if (key === 'id') continue; // Don't update ID
+
+                    if (key === 'stats' && typeof value === 'object') {
+                        // Handle stats object specially
+                        const statsNode = tokenItem.get('stats') as YAMLMap;
+                        if (statsNode && statsNode.set) {
+                            for (const [statKey, statValue] of Object.entries(value)) {
+                                statsNode.set(statKey, statValue);
+                            }
+                        }
+                    } else {
+                        tokenItem.set(key, value);
+                    }
+                }
+
+                fs.writeFileSync(filePath, doc.toString());
+                console.log(`Updated token ${tokenId} stats in ${filePath}`);
+            }
+
+        } catch (e) {
+            console.error(`Error updating token stats in ${filePath}:`, e);
+        }
+    }
+
     public watch(callback: (campaign: Campaign) => void) {
         if (this.watcher) {
             this.watcher.close();
