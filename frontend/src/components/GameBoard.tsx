@@ -17,6 +17,8 @@ interface GameBoardProps {
     setStagePos: (pos: { x: number, y: number }) => void;
 }
 
+type MouseCoords = { x: number; y: number; gridX: number; gridY: number } | null;
+
 const URL_PREFIX = 'http://localhost:3000/assets/';
 
 const BackgroundImage = ({ src, width, height }: { src: string, width: number, height: number }) => {
@@ -239,6 +241,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     // Persistent Fog Layer Management
     // We need to maintain `exploredPolys`.
     const [exploredPolys, setExploredPolys] = useState<Point[][]>([]);
+    const [mousePos, setMousePos] = useState<MouseCoords>(null);
 
     // Reset explored areas when switching maps
     useEffect(() => {
@@ -285,13 +288,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         setStagePos(newPos);
     };
 
+    const handleMouseMove = (e: any) => {
+        const stage = e.target.getStage();
+        const pointer = stage.getPointerPosition();
+        if (!pointer) return;
+
+        const pixelX = Math.round((pointer.x - stagePos.x) / stageScale);
+        const pixelY = Math.round((pointer.y - stagePos.y) / stageScale);
+        const gridX = Math.floor(pixelX / gridSize);
+        const gridY = Math.floor(pixelY / gridSize);
+
+        setMousePos({ x: pixelX, y: pixelY, gridX, gridY });
+    };
+
     return (
-        <div className="w-full h-full bg-gray-900 overflow-hidden">
+        <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
             <Stage
                 width={size.width}
                 height={size.height}
                 draggable
                 onWheel={handleWheel}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={() => setMousePos(null)}
                 scaleX={stageScale}
                 scaleY={stageScale}
                 x={stagePos.x}
@@ -385,6 +403,30 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     </Layer>
                 )}
             </Stage>
+
+            {/* Coordinate Overlay */}
+            {mousePos && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    right: '10px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    fontFamily: 'monospace',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    zIndex: 1000
+                }}>
+                    {isGM && <div>Pixel: {mousePos.x}, {mousePos.y}</div>}
+                    <div>Grid: {mousePos.gridX}, {mousePos.gridY}</div>
+                </div>
+            )}
         </div>
     );
 };
