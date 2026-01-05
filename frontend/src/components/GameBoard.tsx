@@ -158,9 +158,9 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
             }
             <Text
                 text={token.name}
-                x={0}
+                x={-gridSize / 2}
                 y={gridSize / 2 + radius + 2}
-                width={gridSize}
+                width={gridSize * 2}
                 align="center"
                 fill="white"
                 fontSize={12}
@@ -169,6 +169,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
                 shadowOffset={{ x: 1, y: 1 }}
                 shadowOpacity={1}
                 listening={false}
+                wrap="word"
             />
         </Group >
     );
