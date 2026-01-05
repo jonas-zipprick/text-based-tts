@@ -112,3 +112,19 @@ export type GameState = {
     campaign: Campaign;
     activeMapId: number;
 };
+
+export type RollEvent = {
+    tokenName: string;
+    actionName: string;
+    attack: {
+        total: number;
+        d20: number;
+        mod: number;
+        sign: string;
+        type: 'normal' | 'crit' | 'fail';
+    };
+    damage?: {
+        total: number;
+        type?: string;
+    };
+};

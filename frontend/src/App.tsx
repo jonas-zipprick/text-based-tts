@@ -4,9 +4,9 @@ import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
 import './components/Navbar.css';
 import type { GameView } from './types/types';
-import type { Token } from '../../shared';
-
-import { Toaster } from 'react-hot-toast';
+import type { Token, RollEvent } from '../../shared';
+import { ToastNotification } from './components/ToastNotification';
+import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
   const { campaign, loading, error, socket } = useCampaign();
@@ -62,6 +62,20 @@ function App() {
   const handleTokenDoubleClick = useCallback((token: Token) => {
     setSelectedToken(token);
   }, []);
+
+  useEffect(() => {
+    if (socket) {
+      const onRoll = (data: RollEvent) => {
+        toast.custom((t) => <ToastNotification data={data} t={t} />, { duration: 4000 });
+      };
+      socket.on('roll', onRoll);
+      return () => { socket.off('roll', onRoll); };
+    }
+  }, [socket]);
+
+  const handleRoll = useCallback((data: RollEvent) => {
+    if (socket) socket.emit('roll', data);
+  }, [socket]);
 
   const handleTokenStatsUpdate = useCallback((tokenId: number, updates: Partial<Token>) => {
     if (socket) {
@@ -133,6 +147,7 @@ function App() {
           token={selectedToken}
           onClose={() => setSelectedToken(null)}
           onUpdate={handleTokenStatsUpdate}
+          onRoll={handleRoll}
         />
       )}
       <Toaster position="bottom-right" reverseOrder={false} />

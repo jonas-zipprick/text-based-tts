@@ -116,6 +116,10 @@ io.on('connection', (socket) => {
             io.emit('campaign-update', { ...campaign, activeMapId: data.newMapId });
         }
     });
+
+    socket.on('roll', (data: any) => {
+        socket.broadcast.emit('roll', data);
+    });
 });
 
 const PORT = 3000;

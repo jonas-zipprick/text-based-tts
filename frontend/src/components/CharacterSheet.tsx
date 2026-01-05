@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Token } from '../../../shared';
+import type { Token, RollEvent } from '../../../shared';
 import toast from 'react-hot-toast';
+import { ToastNotification } from './ToastNotification';
 import './CharacterSheet.css';
 
 interface CharacterSheetProps {
     token: Token;
     onClose: () => void;
     onUpdate: (tokenId: number, updates: Partial<Token>) => void;
+    onRoll?: (data: RollEvent) => void;
 }
+
 
 // Calculate attribute modifier
 const getModifier = (value: number): string => {
@@ -29,7 +32,7 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, onUpdate }) => {
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, onUpdate, onRoll }) => {
     // Local state for editing
     const [localToken, setLocalToken] = useState<Token>(token);
     const [hpInput, setHpInput] = useState('');
@@ -186,45 +189,27 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                 damageResult = parseDice(action.hit);
             }
 
-            const content = (
-                <>
-                    <div className="cs-toast-token">{localToken.name}</div>
-                    <div className="cs-toast-header">{action.name}</div>
-                    <div className="cs-toast-row">
-                        Attack: <strong>{attackTotal}</strong>
-                        <span className="cs-toast-detail">({d20}{attackSign}{attackMod})</span>
-                    </div>
-                    {damageResult && (
-                        <div className="cs-toast-row">
-                            Damage: <strong>{damageResult.roll}</strong>
-                            <span className="cs-toast-detail">{action.type}</span>
-                        </div>
-                    )}
-                </>
-            );
+            const rollEvent: RollEvent = {
+                tokenName: localToken.name,
+                actionName: action.name,
+                attack: {
+                    total: attackTotal,
+                    d20: d20,
+                    mod: attackMod,
+                    sign: attackSign,
+                    type: type
+                },
+                damage: damageResult ? {
+                    total: damageResult.roll,
+                    type: action.type
+                } : undefined
+            };
 
-            toast.custom((t) => (
-                <div
-                    className={`cs-toast ${type}`}
-                    style={{
-                        opacity: t.visible ? 1 : 0,
-                        transform: t.visible ? 'translateY(0)' : 'translateY(20px)',
-                        transition: 'all 0.3s ease-out',
-                        position: 'relative' // Ensure relative for close button
-                    }}
-                >
-                    <button
-                        className="cs-toast-close"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            toast.dismiss(t.id);
-                        }}
-                    >
-                        ×
-                    </button>
-                    {content}
-                </div>
-            ), { duration: 4000 });
+            toast.custom((t) => <ToastNotification data={rollEvent} t={t} />, { duration: 4000 });
+
+            if (onRoll) {
+                onRoll(rollEvent);
+            }
         }
     };
 
