@@ -6,8 +6,8 @@ tokens:
       - sessionId: "123"
     position:
       - map: 0
-        x: 20
-        y: 16
+        x: 17
+        y: 21
     visibility:
       emit_light:
         enabled: true

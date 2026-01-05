@@ -52,8 +52,22 @@ export class CampaignManager {
             }
         }
 
+        // Safety check: If we lost all maps but had them before, something probably went wrong with reading.
+        // This prevents the UI from unmounting the GameBoard during a blip.
+        if (campaign.maps.length === 0 && this.currentCampaign && this.currentCampaign.maps.length > 0) {
+            console.warn("loadCampaign loaded 0 maps. Conserving previous maps to prevent UI flicker.");
+            campaign.maps = this.currentCampaign.maps;
+            // We might also want to conserve tokens if they rely on maps, but tokens are usually the ones being updated.
+            // But if maps are gone, tokens position references might be invalid anyway.
+            // Let's stick to just maps for now.
+        }
+
+        if (campaign.maps.length === 0) {
+            console.warn("loadCampaign: Returning 0 maps!", { previousMaps: this.currentCampaign?.maps?.length });
+        }
+
         this.currentCampaign = campaign;
-        console.log(`Loaded campaign "${campaign.name}" with ${campaign.maps.length} maps and ${campaign.tokens.length} tokens.`);
+        // console.log(`Loaded campaign "${campaign.name}" with ${campaign.maps.length} maps and ${campaign.tokens.length} tokens.`);
         return campaign;
     }
 

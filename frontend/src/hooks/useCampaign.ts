@@ -27,6 +27,10 @@ export function useCampaign() {
         setSocket(newSocket);
 
         newSocket.on('campaign-update', (updatedCampaign: Campaign) => {
+            if (!updatedCampaign || !updatedCampaign.maps || updatedCampaign.maps.length === 0) {
+                console.warn("Received empty/invalid campaign update, ignoring.", updatedCampaign);
+                return;
+            }
             // console.log('Received campaign update', updatedCampaign);
             setCampaign(updatedCampaign);
             setLoading(false);

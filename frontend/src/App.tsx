@@ -6,10 +6,12 @@ function App() {
   const { campaign, loading, error, socket } = useCampaign();
   const [isGM, setIsGM] = useState(false);
   const [sessionId, setSessionId] = useState("239981"); // Default to player 1
+  const [stageScale, setStageScale] = useState<number>(1);
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
-  if (loading) return <div className="text-white p-4">Loading campaign...</div>;
-  if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
-  if (!campaign) return <div className="text-white p-4">No campaign data.</div>;
+  if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
+  if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
+  if (!campaign) { console.log("App: No Campaign"); return <div className="text-white p-4">No campaign data.</div>; }
 
   const handleTokenMove = (tokenId: number, position: { map: number, x: number, y: number }) => {
     if (socket) {
@@ -39,6 +41,10 @@ function App() {
         onTokenMove={handleTokenMove}
         isGM={isGM}
         sessionId={sessionId}
+        stageScale={stageScale}
+        setStageScale={setStageScale}
+        stagePos={stagePos}
+        setStagePos={setStagePos}
       />
     </div>
   );

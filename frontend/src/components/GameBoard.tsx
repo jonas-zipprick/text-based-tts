@@ -9,6 +9,10 @@ interface GameBoardProps {
     onTokenMove: (tokenId: number, position: { map: number, x: number, y: number }) => void;
     isGM: boolean;
     sessionId: string;
+    stageScale: number;
+    setStageScale: (scale: number) => void;
+    stagePos: { x: number, y: number };
+    setStagePos: (pos: { x: number, y: number }) => void;
 }
 
 const URL_PREFIX = 'http://localhost:3000/assets/';
@@ -81,9 +85,22 @@ const TokenComponent = ({ token, gridSize, onMove }: { token: Token, gridSize: n
     );
 };
 
-export const GameBoard: React.FC<GameBoardProps> = ({ campaign, onTokenMove, isGM, sessionId }) => {
+export const GameBoard: React.FC<GameBoardProps> = ({
+    campaign,
+    onTokenMove,
+    isGM,
+    sessionId,
+    stageScale,
+    setStageScale,
+    stagePos,
+    setStagePos
+}) => {
     const activeMap = campaign.maps[0];
-    if (!activeMap) return <div>No map found</div>;
+
+    if (!activeMap) {
+        console.log("GameBoard: No active map found during render", campaign);
+        return <div>No map found</div>;
+    }
 
     const gridSize = activeMap.grid.cellSize;
     const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -146,9 +163,51 @@ export const GameBoard: React.FC<GameBoardProps> = ({ campaign, onTokenMove, isG
     const bg = activeMap.background?.[0];
     const bgUrl = bg ? `${URL_PREFIX}${bg.picture}` : null;
 
+    // Internal state moved to props
+    // const [stageScale, setStageScale] = useState<number>(1);
+    // const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+
+    const handleWheel = (e: any) => {
+        e.evt.preventDefault();
+        const stage = e.target.getStage();
+        const oldScale = stage.scaleX();
+        const pointer = stage.getPointerPosition();
+
+        const scaleBy = 1.1;
+        const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+        const mousePointTo = {
+            x: (pointer.x - stage.x()) / oldScale,
+            y: (pointer.y - stage.y()) / oldScale,
+        };
+
+        const newPos = {
+            x: pointer.x - mousePointTo.x * newScale,
+            y: pointer.y - mousePointTo.y * newScale,
+        };
+
+        setStageScale(newScale);
+        setStagePos(newPos);
+    };
+
     return (
         <div className="w-full h-full bg-gray-900 overflow-hidden">
-            <Stage width={size.width} height={size.height} draggable>
+            <Stage
+                width={size.width}
+                height={size.height}
+                draggable
+                onWheel={handleWheel}
+                scaleX={stageScale}
+                scaleY={stageScale}
+                x={stagePos.x}
+                y={stagePos.y}
+                onDragEnd={(e) => {
+                    // Only update if the stage itself was dragged, not a child (token)
+                    if (e.target === e.target.getStage()) {
+                        setStagePos(e.target.position());
+                    }
+                }}
+            >
                 {/* Map Layer */}
                 <Layer>
                     {bgUrl ? (
