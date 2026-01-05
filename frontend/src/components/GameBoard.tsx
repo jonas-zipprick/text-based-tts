@@ -416,6 +416,43 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                     })}
                 </Layer>
 
+                {/* Editor Walls Layer */}
+                {view === 'editor' && (
+                    <Layer>
+                        {(activeMap.walls || []).map((wall, i) => {
+                            const wallScaler = activeMap.wallUnit === 'pixel' ? 1 : gridSize;
+                            const points = [
+                                wall.start.x * wallScaler,
+                                wall.start.y * wallScaler,
+                                wall.end.x * wallScaler,
+                                wall.end.y * wallScaler
+                            ];
+                            return (
+                                <Group key={`wall-${i}`}>
+                                    {/* Base black line */}
+                                    <Line
+                                        points={points}
+                                        stroke="black"
+                                        strokeWidth={6}
+                                        lineCap="round"
+                                        opacity={0.8}
+                                        listening={false}
+                                    />
+                                    {/* Dashed yellow line */}
+                                    <Line
+                                        points={points}
+                                        stroke="#f1c40f"
+                                        strokeWidth={4}
+                                        dash={[12, 12]}
+                                        lineCap="round"
+                                        listening={false}
+                                    />
+                                </Group>
+                            );
+                        })}
+                    </Layer>
+                )}
+
                 {/* Fog Layer - Black (Unexplored) */}
                 {/* Covers everything EXCEPT explored history. */}
                 {!isGM && (
