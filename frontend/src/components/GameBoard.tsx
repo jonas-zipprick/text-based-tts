@@ -17,7 +17,14 @@ interface GameBoardProps {
     setStagePos: (pos: { x: number, y: number }) => void;
 }
 
-type MouseCoords = { x: number; y: number; gridX: number; gridY: number } | null;
+type MouseCoords = {
+    x: number;
+    y: number;
+    gridX: number;
+    gridY: number;
+    dragStart?: { gridX: number, gridY: number };
+    distance?: number;
+} | null;
 
 const URL_PREFIX = 'http://localhost:3000/assets/';
 
@@ -26,7 +33,14 @@ const BackgroundImage = ({ src, width, height }: { src: string, width: number, h
     return <KonvaImage image={image} width={width} height={height} />;
 };
 
-const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token, gridSize: number, onMove: (id: number, x: number, y: number) => void, activeMapId: number }) => {
+const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onDragEnd }: {
+    token: Token,
+    gridSize: number,
+    onMove: (id: number, x: number, y: number) => void,
+    activeMapId: number,
+    onDragStart?: (gridX: number, gridY: number) => void,
+    onDragEnd?: () => void
+}) => {
     const pos = token.position?.find(p => p.map === activeMapId);
     if (!pos) return null;
 
@@ -39,7 +53,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
 
     const [isHovered, setIsHovered] = useState(false);
 
-    const handleDragEnd = (e: any) => {
+    const handleDragEndInternal = (e: any) => {
         const newX = Math.round(e.target.x() / gridSize);
         const newY = Math.round(e.target.y() / gridSize);
         onMove(token.id, newX, newY);
@@ -50,6 +64,16 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
             y: newY * gridSize,
             duration: 0.1
         });
+
+        if (onDragEnd) onDragEnd();
+    };
+
+    const handleDragStartInternal = (e: any) => {
+        if (onDragStart) {
+            const gridX = Math.round(e.target.x() / gridSize);
+            const gridY = Math.round(e.target.y() / gridSize);
+            onDragStart(gridX, gridY);
+        }
     };
 
     const curHp = token.currentHp ?? token.stats.hp;
@@ -61,7 +85,8 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
             x={x}
             y={y}
             draggable
-            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStartInternal}
+            onDragEnd={handleDragEndInternal}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -242,6 +267,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     // We need to maintain `exploredPolys`.
     const [exploredPolys, setExploredPolys] = useState<Point[][]>([]);
     const [mousePos, setMousePos] = useState<MouseCoords>(null);
+    const [dragStartPos, setDragStartPos] = useState<{ gridX: number, gridY: number } | null>(null);
 
     // Reset explored areas when switching maps
     useEffect(() => {
@@ -298,7 +324,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const gridX = Math.floor(pixelX / gridSize);
         const gridY = Math.floor(pixelY / gridSize);
 
-        setMousePos({ x: pixelX, y: pixelY, gridX, gridY });
+        let distance = undefined;
+        if (dragStartPos) {
+            const dx = Math.abs(gridX - dragStartPos.gridX);
+            const dy = Math.abs(gridY - dragStartPos.gridY);
+            distance = Math.max(dx, dy) * 5; // 5ft per square, Chebyshev
+        }
+
+        setMousePos({
+            x: pixelX,
+            y: pixelY,
+            gridX,
+            gridY,
+            dragStart: dragStartPos || undefined,
+            distance: distance
+        });
     };
 
     return (
@@ -309,6 +349,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 draggable
                 onWheel={handleWheel}
                 onMouseMove={handleMouseMove}
+                onDragMove={handleMouseMove}
                 onMouseLeave={() => setMousePos(null)}
                 scaleX={stageScale}
                 scaleY={stageScale}
@@ -377,6 +418,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                                         gridSize={gridSize}
                                         onMove={(id, x, y) => onTokenMove(id, { x, y, map: activeMap.id })}
                                         activeMapId={activeMap.id}
+                                        onDragStart={(gx, gy) => setDragStartPos({ gridX: gx, gridY: gy })}
+                                        onDragEnd={() => setDragStartPos(null)}
                                     />
                                 );
                             }
@@ -425,6 +468,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 }}>
                     {isGM && <div>Pixel: {mousePos.x}, {mousePos.y}</div>}
                     <div>Grid: {mousePos.gridX}, {mousePos.gridY}</div>
+                    {mousePos.dragStart && (
+                        <>
+                            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '2px', paddingTop: '2px' }}>
+                                Start: {mousePos.dragStart.gridX}, {mousePos.dragStart.gridY}
+                            </div>
+                            <div style={{ color: '#2ecc71', fontWeight: 'bold' }}>
+                                Dist: {mousePos.distance} ft
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>
