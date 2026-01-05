@@ -66,6 +66,7 @@ export type Token = {
 
 export type Campaign = {
     name: string;
+    activeMapId: number;
     maps: MapData[];
     tokens: Token[];
 };

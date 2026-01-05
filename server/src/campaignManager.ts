@@ -19,6 +19,7 @@ export class CampaignManager {
     public loadCampaign(): Campaign {
         const campaign: Campaign = {
             name: 'New Campaign',
+            activeMapId: 0,
             maps: [],
             tokens: [],
         };
@@ -40,6 +41,7 @@ export class CampaignManager {
 
                 // Merge properties
                 if (data.name) campaign.name = data.name;
+                if (data.activeMapId !== undefined) campaign.activeMapId = data.activeMapId;
                 if (data.maps) campaign.maps.push(...(data.maps as MapData[]));
                 if (data.tokens) {
                     const tokens = data.tokens as Token[];
@@ -73,6 +75,26 @@ export class CampaignManager {
 
     public getCampaign(): Campaign | null {
         return this.currentCampaign;
+    }
+
+    public setActiveMapId(mapId: number) {
+        const filePath = path.join(this.campaignDir, 'campaign.yaml');
+        if (!fs.existsSync(filePath)) {
+            console.error(`campaign.yaml not found at ${filePath}`);
+            return;
+        }
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+
+            doc.set('activeMapId', mapId);
+
+            fs.writeFileSync(filePath, doc.toString());
+            console.log(`Updated activeMapId to ${mapId} in ${filePath}`);
+        } catch (e) {
+            console.error(`Error updating activeMapId in ${filePath}:`, e);
+        }
     }
 
     public updateTokenPosition(tokenId: number, mapId: number, x: number, y: number) {

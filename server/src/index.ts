@@ -73,6 +73,9 @@ io.on('connection', (socket) => {
     socket.on('change-map', (data: { newMapId: number }) => {
         const campaign = campaignManager.getCampaign();
         if (campaign) {
+            // Persist the active map choice
+            campaignManager.setActiveMapId(data.newMapId);
+
             // Move all player-controlled tokens to the new map
             campaign.tokens.forEach(token => {
                 if (token.controlled_by && token.controlled_by.length > 0) {
@@ -88,8 +91,9 @@ io.on('connection', (socket) => {
                     campaignManager.updateTokenPosition(token.id, data.newMapId, pos.x, pos.y);
                 }
             });
-            // Broadcast the updated campaign
-            io.emit('campaign-update', campaign);
+            // Broadcast the updated campaign is handled by the file watcher in CampaignManager
+            // but we can also broadcast it here for immediate response (optimistic)
+            io.emit('campaign-update', { ...campaign, activeMapId: data.newMapId });
         }
     });
 });
