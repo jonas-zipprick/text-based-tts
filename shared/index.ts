@@ -43,6 +43,10 @@ export type TokenAction = {
     targets?: number;
     hit?: string;
     type?: string;
+    extraDamage?: {
+        hit: string;
+        type: string;
+    }[];
 };
 
 export type TokenTrait = {
@@ -69,7 +73,7 @@ export type TokenStats = {
     xp?: number;
     traits?: TokenTrait[];
     actions?: TokenAction[];
-    legendaryActions?: TokenTrait[];
+    legendaryActions?: TokenAction[];
 };
 
 export type TokenVisibility = {
@@ -127,5 +131,7 @@ export type RollEvent = {
     damage?: {
         total: number;
         type?: string;
-    };
+        formula?: string;
+        resultText?: string;
+    }[];
 };

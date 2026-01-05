@@ -370,6 +370,24 @@
                                                 "type": "integer"
                                             }
                                         }
+                                    },
+                                    "extraDamage": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "hit": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "hit",
+                                                "type"
+                                            ]
+                                        }
                                     }
                                 },
                                 "required": [

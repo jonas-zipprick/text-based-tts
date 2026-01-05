@@ -31,12 +31,14 @@ export const ToastNotification: React.FC<{ data: RollEvent; t: any }> = ({ data,
                     ({data.attack.d20}{data.attack.sign}{data.attack.mod})
                 </span>
             </div>
-            {data.damage && (
-                <div className="cs-toast-row">
-                    Damage: <strong>{data.damage.total}</strong>
-                    <span className="cs-toast-detail">{data.damage.type}</span>
+            {data.damage && data.damage.map((dmg, idx) => (
+                <div key={idx} className="cs-toast-row">
+                    Damage: <strong>{dmg.total}</strong>
+                    <span className="cs-toast-detail">
+                        {dmg.type} {dmg.formula && `(${dmg.formula})`}
+                    </span>
                 </div>
-            )}
+            ))}
         </div>
     );
 };

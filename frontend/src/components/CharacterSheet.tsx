@@ -189,41 +189,57 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         if (action.modifiers?.attack !== undefined) {
             // Attack Roll
             const d20 = Math.floor(Math.random() * 20) + 1;
-            const attackMod = action.modifiers.attack;
+            const attackMod = action.modifiers?.attack ?? 0;
             const attackTotal = d20 + attackMod;
 
-            let type: 'normal' | 'crit' | 'fail' = 'normal';
-            if (d20 === 20) type = 'crit';
-            if (d20 === 1) type = 'fail';
+            // Initial roll results
+            let damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
 
-            const attackSign = attackMod >= 0 ? '+' : '';
-
-            // Damage Roll
-            let damageResult = null;
+            // Primary Damage
             if (action.hit) {
-                damageResult = parseDice(action.hit);
+                const dr = parseDice(action.hit);
+                if (dr) {
+                    damageResults.push({
+                        total: dr.roll,
+                        type: action.type,
+                        formula: action.hit,
+                        resultText: dr.text
+                    });
+                }
             }
 
-            const rollEvent: RollEvent = {
+            // Extra Damage
+            if (action.extraDamage) {
+                action.extraDamage.forEach((extra: any) => {
+                    const dr = parseDice(extra.hit);
+                    if (dr) {
+                        damageResults.push({
+                            total: dr.roll,
+                            type: extra.type,
+                            formula: extra.hit,
+                            resultText: dr.text
+                        });
+                    }
+                });
+            }
+
+            const rollData: RollEvent = {
                 tokenName: localToken.name,
                 actionName: action.name,
                 attack: {
                     total: attackTotal,
-                    d20: d20,
+                    d20,
                     mod: attackMod,
-                    sign: attackSign,
-                    type: type
+                    sign: attackMod >= 0 ? '+' : '',
+                    type: d20 === 20 ? 'crit' : (d20 === 1 ? 'fail' : 'normal')
                 },
-                damage: damageResult ? {
-                    total: damageResult.roll,
-                    type: action.type
-                } : undefined
+                damage: damageResults.length > 0 ? damageResults : undefined
             };
 
-            toast.custom((t) => <ToastNotification data={rollEvent} t={t} />, { duration: 4000 });
+            toast.custom((t) => <ToastNotification data={rollData} t={t} />, { duration: 4000 });
 
             if (onRoll) {
-                onRoll(rollEvent);
+                onRoll(rollData);
             }
         }
     };
@@ -614,6 +630,28 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 />
                                                 <span> damage.</span>
                                             </div>
+                                            {action.extraDamage && action.extraDamage.map((extra: any, eIdx: number) => (
+                                                <div className="cs-action-hit-row" key={eIdx}>
+                                                    <span>plus </span>
+                                                    <input
+                                                        type="text"
+                                                        className="cs-editable"
+                                                        value={extra.hit || ''}
+                                                        onChange={e => updateField(`stats.actions.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
+                                                        placeholder="dice"
+                                                        style={{ width: '80px' }}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        className="cs-editable"
+                                                        value={extra.type || ''}
+                                                        onChange={e => updateField(`stats.actions.${index}.extraDamage.${eIdx}.type`, e.target.value)}
+                                                        placeholder="type"
+                                                        style={{ width: '80px', fontStyle: 'italic' }}
+                                                    />
+                                                    <span> damage.</span>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 );
@@ -625,29 +663,87 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     {localToken.stats.legendaryActions && localToken.stats.legendaryActions.length > 0 && (
                         <>
                             <h2 className="cs-section-title">Legendary Actions</h2>
-                            {localToken.stats.legendaryActions.map((action, index) => (
-                                <div className="cs-ability" key={index}>
-                                    <div className="cs-ability-header">
-                                        <input
-                                            type="text"
-                                            className="cs-editable cs-action-name"
-                                            value={action.name}
-                                            onChange={e => updateField(`stats.legendaryActions.${index}.name`, e.target.value)}
-                                        />
+                            {localToken.stats.legendaryActions.map((action, index) => {
+                                const isRollable = action.modifiers?.attack !== undefined || action.hit !== undefined;
+                                return (
+                                    <div className="cs-action" key={index}>
+                                        <div className="cs-action-header">
+                                            <input
+                                                type="text"
+                                                className="cs-editable cs-action-name"
+                                                value={action.name}
+                                                onChange={e => updateField(`stats.legendaryActions.${index}.name`, e.target.value)}
+                                            />
+                                            {isRollable && (
+                                                <button
+                                                    className="cs-roll-btn"
+                                                    onClick={() => handleActionClick(action)}
+                                                    title="Roll action"
+                                                >
+                                                    🎲 Roll
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="cs-action-body">
+                                            <textarea
+                                                className="cs-editable-desc"
+                                                value={action.description || ''}
+                                                onChange={e => updateField(`stats.legendaryActions.${index}.description`, e.target.value)}
+                                                placeholder="Action description..."
+                                                rows={1}
+                                                onInput={(e: any) => {
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+                                            {(action.hit || action.extraDamage) && (
+                                                <div className="cs-action-hit-row">
+                                                    <span>Hit: </span>
+                                                    <input
+                                                        type="text"
+                                                        className="cs-editable"
+                                                        value={action.hit || ''}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.hit`, e.target.value)}
+                                                        placeholder="dice"
+                                                        style={{ width: '100px' }}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        className="cs-editable"
+                                                        value={action.type || ''}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.type`, e.target.value)}
+                                                        placeholder="type"
+                                                        style={{ width: '80px', fontStyle: 'italic' }}
+                                                    />
+                                                    <span> damage.</span>
+                                                </div>
+                                            )}
+                                            {action.extraDamage && action.extraDamage.map((extra: any, eIdx: number) => (
+                                                <div className="cs-action-hit-row" key={eIdx}>
+                                                    <span>plus </span>
+                                                    <input
+                                                        type="text"
+                                                        className="cs-editable"
+                                                        value={extra.hit || ''}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
+                                                        placeholder="dice"
+                                                        style={{ width: '80px' }}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        className="cs-editable"
+                                                        value={extra.type || ''}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.extraDamage.${eIdx}.type`, e.target.value)}
+                                                        placeholder="type"
+                                                        style={{ width: '80px', fontStyle: 'italic' }}
+                                                    />
+                                                    <span> damage.</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <textarea
-                                        className="cs-editable-desc"
-                                        value={action.description || ''}
-                                        onChange={e => updateField(`stats.legendaryActions.${index}.description`, e.target.value)}
-                                        placeholder="Action description..."
-                                        rows={1}
-                                        onInput={(e: any) => {
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = e.target.scrollHeight + 'px';
-                                        }}
-                                    />
-                                </div>
-                            ))}
+                                );
+                            })}
                         </>
                     )}
                 </div>
