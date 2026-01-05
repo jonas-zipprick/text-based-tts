@@ -271,10 +271,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     {/* Grid */}
                     <Group>
                         {Array.from({ length: activeMap.grid.width + 1 }).map((_, i) => (
-                            <Rect key={`v${i}`} x={i * gridSize} y={0} width={1} height={mapHeight} fill="rgba(255,255,255,0.1)" />
+                            <Rect key={`v${i}`} x={i * gridSize} y={0} width={1} height={mapHeight} fill="rgba(0,0,0,0.25)" />
                         ))}
                         {Array.from({ length: activeMap.grid.height + 1 }).map((_, i) => (
-                            <Rect key={`h${i}`} x={0} y={i * gridSize} width={mapWidth} height={1} fill="rgba(255,255,255,0.1)" />
+                            <Rect key={`h${i}`} x={0} y={i * gridSize} width={mapWidth} height={1} fill="rgba(0,0,0,0.25)" />
                         ))}
                     </Group>
                 </Layer>
