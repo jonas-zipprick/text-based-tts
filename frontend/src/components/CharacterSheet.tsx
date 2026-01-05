@@ -32,6 +32,50 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
+interface AutoExpandingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    className?: string;
+}
+
+const AutoExpandingInput: React.FC<AutoExpandingInputProps> = ({ className = '', style, ...props }) => {
+    const spanRef = useRef<HTMLSpanElement>(null);
+    const [width, setWidth] = useState<number | string>('auto');
+
+    useEffect(() => {
+        if (spanRef.current) {
+            setWidth(spanRef.current.offsetWidth + 2); // Small buffer
+        }
+    }, [props.value, props.placeholder]);
+
+    const displayValue = props.value || props.placeholder || '';
+
+    return (
+        <div className="auto-expand-container" style={{ display: 'inline-block', position: 'relative' }}>
+            <input
+                {...props}
+                className={`cs-editable ${className}`}
+                style={{ ...style, width: typeof width === 'number' ? `${width}px` : width }}
+            />
+            <span
+                ref={spanRef}
+                className={`cs-editable ${className}`}
+                style={{
+                    ...style,
+                    position: 'absolute',
+                    visibility: 'hidden',
+                    whiteSpace: 'pre',
+                    height: 0,
+                    padding: '1px 4px', // Match cs-editable padding
+                    border: 'none',
+                    left: 0,
+                    top: 0,
+                }}
+            >
+                {displayValue}
+            </span>
+        </div>
+    );
+};
+
 export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, onUpdate, onRoll }) => {
     // Local state for editing
     const [localToken, setLocalToken] = useState<Token>(token);
@@ -252,35 +296,35 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     {/* Header */}
                     <div className="cs-header">
                         <h1 className="cs-name">
-                            <input
+                            <AutoExpandingInput
                                 type="text"
-                                className="cs-editable cs-editable-wide"
+                                className="cs-editable-wide"
                                 value={localToken.name}
                                 onChange={e => updateField('name', e.target.value)}
                                 style={{ fontSize: '28px', fontWeight: 'bold', fontVariant: 'small-caps' }}
                             />
                         </h1>
                         <div className="cs-type-line">
-                            <input
+                            <AutoExpandingInput
                                 type="text"
-                                className="cs-editable cs-type-field"
+                                className="cs-type-field"
                                 value={localToken.size || ''}
                                 onChange={e => updateField('size', e.target.value)}
                                 placeholder="Size"
                             />
-                            <input
+                            <AutoExpandingInput
                                 type="text"
-                                className="cs-editable cs-type-field"
+                                className="cs-type-field"
                                 value={localToken.type || ''}
                                 onChange={e => updateField('type', e.target.value)}
                                 placeholder="Type"
                             />
-                            {localToken.alignment && (
+                            {localToken.alignment !== undefined && (
                                 <>
                                     <span>, </span>
-                                    <input
+                                    <AutoExpandingInput
                                         type="text"
-                                        className="cs-editable cs-type-field"
+                                        className="cs-type-field"
                                         value={localToken.alignment}
                                         onChange={e => updateField('alignment', e.target.value)}
                                         placeholder="Alignment"
@@ -302,13 +346,12 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 value={localToken.stats.ac}
                                 onChange={e => updateField('stats.ac', parseInt(e.target.value) || 0)}
                             />
-                            <input
+                            <AutoExpandingInput
                                 type="text"
-                                className="cs-editable"
                                 value={localToken.stats.acType || ''}
                                 onChange={e => updateField('stats.acType', e.target.value)}
                                 placeholder="(armor type)"
-                                style={{ fontStyle: 'italic', width: '120px' }}
+                                style={{ fontStyle: 'italic' }}
                             />
                         </div>
 
@@ -320,13 +363,12 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 value={maxHp}
                                 onChange={e => updateField('stats.hp', parseInt(e.target.value) || 0)}
                             />
-                            <input
+                            <AutoExpandingInput
                                 type="text"
-                                className="cs-editable"
                                 value={localToken.stats.hpFormula || ''}
                                 onChange={e => updateField('stats.hpFormula', e.target.value)}
                                 placeholder="(dice formula)"
-                                style={{ fontStyle: 'italic', width: '100px' }}
+                                style={{ fontStyle: 'italic' }}
                             />
                             <div className="cs-hp-current">
                                 <span>Current:</span>
@@ -396,12 +438,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.damageResistances && localToken.stats.damageResistances.length > 0 && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Damage Resistances </span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
-                                    className="cs-editable"
                                     value={localToken.stats.damageResistances.join(', ')}
                                     onChange={e => updateField('stats.damageResistances', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                                    style={{ width: '250px' }}
                                 />
                             </div>
                         )}
@@ -409,12 +449,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.damageVulnerabilities && localToken.stats.damageVulnerabilities.length > 0 && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Damage Vulnerabilities </span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
-                                    className="cs-editable"
                                     value={localToken.stats.damageVulnerabilities.join(', ')}
                                     onChange={e => updateField('stats.damageVulnerabilities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                                    style={{ width: '250px' }}
                                 />
                             </div>
                         )}
@@ -422,12 +460,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.damageImmunities && localToken.stats.damageImmunities.length > 0 && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Damage Immunities </span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
-                                    className="cs-editable"
                                     value={localToken.stats.damageImmunities.join(', ')}
                                     onChange={e => updateField('stats.damageImmunities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                                    style={{ width: '300px' }}
                                 />
                             </div>
                         )}
@@ -435,12 +471,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.conditionImmunities && localToken.stats.conditionImmunities.length > 0 && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Condition Immunities </span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
-                                    className="cs-editable"
                                     value={localToken.stats.conditionImmunities.join(', ')}
                                     onChange={e => updateField('stats.conditionImmunities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                                    style={{ width: '300px' }}
                                 />
                             </div>
                         )}
@@ -460,12 +494,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.senses && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Senses </span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
-                                    className="cs-editable"
                                     value={localToken.stats.senses}
                                     onChange={e => updateField('stats.senses', e.target.value)}
-                                    style={{ width: '300px' }}
                                 />
                             </div>
                         )}
@@ -473,12 +505,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.languages !== undefined && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Languages </span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
-                                    className="cs-editable"
                                     value={localToken.stats.languages || '—'}
                                     onChange={e => updateField('stats.languages', e.target.value)}
-                                    style={{ width: '200px' }}
                                 />
                             </div>
                         )}
@@ -612,42 +642,36 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             )}
                                             <div className="cs-action-hit-row">
                                                 <span>Hit: </span>
-                                                <input
+                                                <AutoExpandingInput
                                                     type="text"
-                                                    className="cs-editable"
                                                     value={action.hit || ''}
                                                     onChange={e => updateField(`stats.actions.${index}.hit`, e.target.value)}
                                                     placeholder="dice (e.g. 1d8+2)"
-                                                    style={{ width: '100px' }}
                                                 />
-                                                <input
+                                                <AutoExpandingInput
                                                     type="text"
-                                                    className="cs-editable"
                                                     value={action.type || ''}
                                                     onChange={e => updateField(`stats.actions.${index}.type`, e.target.value)}
                                                     placeholder="type"
-                                                    style={{ width: '80px', fontStyle: 'italic' }}
+                                                    style={{ fontStyle: 'italic' }}
                                                 />
                                                 <span> damage.</span>
                                             </div>
                                             {action.extraDamage && action.extraDamage.map((extra: any, eIdx: number) => (
                                                 <div className="cs-action-hit-row" key={eIdx}>
                                                     <span>plus </span>
-                                                    <input
+                                                    <AutoExpandingInput
                                                         type="text"
-                                                        className="cs-editable"
                                                         value={extra.hit || ''}
                                                         onChange={e => updateField(`stats.actions.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
                                                         placeholder="dice"
-                                                        style={{ width: '80px' }}
                                                     />
-                                                    <input
+                                                    <AutoExpandingInput
                                                         type="text"
-                                                        className="cs-editable"
                                                         value={extra.type || ''}
                                                         onChange={e => updateField(`stats.actions.${index}.extraDamage.${eIdx}.type`, e.target.value)}
                                                         placeholder="type"
-                                                        style={{ width: '80px', fontStyle: 'italic' }}
+                                                        style={{ fontStyle: 'italic' }}
                                                     />
                                                     <span> damage.</span>
                                                 </div>
@@ -699,21 +723,18 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             {(action.hit || action.extraDamage) && (
                                                 <div className="cs-action-hit-row">
                                                     <span>Hit: </span>
-                                                    <input
+                                                    <AutoExpandingInput
                                                         type="text"
-                                                        className="cs-editable"
                                                         value={action.hit || ''}
                                                         onChange={e => updateField(`stats.legendaryActions.${index}.hit`, e.target.value)}
                                                         placeholder="dice"
-                                                        style={{ width: '100px' }}
                                                     />
-                                                    <input
+                                                    <AutoExpandingInput
                                                         type="text"
-                                                        className="cs-editable"
                                                         value={action.type || ''}
                                                         onChange={e => updateField(`stats.legendaryActions.${index}.type`, e.target.value)}
                                                         placeholder="type"
-                                                        style={{ width: '80px', fontStyle: 'italic' }}
+                                                        style={{ fontStyle: 'italic' }}
                                                     />
                                                     <span> damage.</span>
                                                 </div>
@@ -721,21 +742,18 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             {action.extraDamage && action.extraDamage.map((extra: any, eIdx: number) => (
                                                 <div className="cs-action-hit-row" key={eIdx}>
                                                     <span>plus </span>
-                                                    <input
+                                                    <AutoExpandingInput
                                                         type="text"
-                                                        className="cs-editable"
                                                         value={extra.hit || ''}
                                                         onChange={e => updateField(`stats.legendaryActions.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
                                                         placeholder="dice"
-                                                        style={{ width: '80px' }}
                                                     />
-                                                    <input
+                                                    <AutoExpandingInput
                                                         type="text"
-                                                        className="cs-editable"
                                                         value={extra.type || ''}
                                                         onChange={e => updateField(`stats.legendaryActions.${index}.extraDamage.${eIdx}.type`, e.target.value)}
                                                         placeholder="type"
-                                                        style={{ width: '80px', fontStyle: 'italic' }}
+                                                        style={{ fontStyle: 'italic' }}
                                                     />
                                                     <span> damage.</span>
                                                 </div>
