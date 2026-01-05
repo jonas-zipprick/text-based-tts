@@ -43,6 +43,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         const incomingJson = JSON.stringify(token);
         // Only sync if this wasn't our own save coming back
         if (pendingSaveRef.current !== incomingJson) {
+            // console.log('CharacterSheet: External update received', token);
             setLocalToken(token);
         }
     }, [token]);

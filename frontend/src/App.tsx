@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
@@ -44,31 +44,32 @@ function App() {
     }
   }, [campaign, selectedToken]);
 
-  if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
-  if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
-  if (!campaign) { console.log("App: No Campaign"); return <div className="text-white p-4">No campaign data.</div>; }
-
-  const handleTokenMove = (tokenId: number, position: { map: number, x: number, y: number }) => {
+  const handleTokenMove = useCallback((tokenId: number, position: { map: number, x: number, y: number }) => {
     if (socket) {
       socket.emit('token-move', { tokenId, position });
     }
-  };
+  }, [socket]);
 
-  const handleMapChange = (newMapId: number) => {
-    if (socket && newMapId !== campaign.activeMapId) {
+  const handleMapChange = useCallback((newMapId: number) => {
+    if (socket && newMapId !== campaign?.activeMapId) {
       socket.emit('change-map', { newMapId });
     }
-  };
+  }, [socket, campaign?.activeMapId]);
 
-  const handleTokenDoubleClick = (token: Token) => {
+  const handleTokenDoubleClick = useCallback((token: Token) => {
     setSelectedToken(token);
-  };
+  }, []);
 
-  const handleTokenStatsUpdate = (tokenId: number, updates: Partial<Token>) => {
+  const handleTokenStatsUpdate = useCallback((tokenId: number, updates: Partial<Token>) => {
     if (socket) {
+      // console.log('App: Emitting token-update-stats', { tokenId, updates });
       socket.emit('token-update-stats', { tokenId, updates });
     }
-  };
+  }, [socket]);
+
+  if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
+  if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
+  if (!campaign) { console.log("App: No Campaign"); return <div className="text-white p-4">No campaign data.</div>; }
 
   return (
     <div className="w-screen h-screen bg-black flex flex-col">
