@@ -1,7 +1,7 @@
 tokens:
   - id: 10001
     name: "Jonas"
-    picture: pictures/jonas.png
+    picture: pictures/tokens/jonas.png
     controlled_by:
       - sessionId: "239981"
     position:
@@ -9,7 +9,25 @@ tokens:
         x: 9
         y: 10
       - map: 1
-        x: 12
+        x: 9
+        y: 8
+      - map: 3
+        x: 5
+        y: 12
+      - map: 5
+        x: 10
+        y: 10
+      - map: 9
+        x: 8
+        y: 18
+      - map: 6
+        x: 10
+        y: 10
+      - map: 15
+        x: 10
+        y: 10
+      - map: 18
+        x: 17
         y: 13
     visibility:
       emit_light:

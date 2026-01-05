@@ -1,7 +1,7 @@
 tokens:
   - id: 10002
     name: "Rictavio"
-    picture: "pictures/roll20/max (21).webp"
+    picture: "pictures/tokens/token-rudolf-van-richten.webp"
     controlled_by:
       - sessionId: "123"
     position:
@@ -9,6 +9,24 @@ tokens:
         x: 17
         y: 15
       - map: 1
+        x: 10
+        y: 10
+      - map: 3
+        x: 12
+        y: 10
+      - map: 5
+        x: 10
+        y: 10
+      - map: 9
+        x: 17
+        y: 13
+      - map: 6
+        x: 10
+        y: 10
+      - map: 15
+        x: 10
+        y: 10
+      - map: 18
         x: 10
         y: 10
     visibility:
