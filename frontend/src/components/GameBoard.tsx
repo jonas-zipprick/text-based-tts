@@ -158,9 +158,9 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
             }
             <Text
                 text={token.name}
-                x={-gridSize / 2}
+                x={-gridSize * 0.25}
                 y={gridSize / 2 + radius + 2}
-                width={gridSize * 2}
+                width={gridSize * 1.5}
                 align="center"
                 fill="white"
                 fontSize={12}
