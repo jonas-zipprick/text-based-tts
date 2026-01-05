@@ -6,14 +6,14 @@ tokens:
       - sessionId: "239981"
     position:
       - map: 0
-        x: 13
-        y: 13
+        x: 14
+        y: 18
     visibility:
       emit_light:
         enabled: true
         radius: 5
         color: "#ffffff"
-      night_vision: true
+      night_vision: false
       view_distance: 12
     stats:
       ac: 16

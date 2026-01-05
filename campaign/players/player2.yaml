@@ -7,7 +7,7 @@ tokens:
     position:
       - map: 0
         x: 17
-        y: 21
+        y: 14
     visibility:
       emit_light:
         enabled: true

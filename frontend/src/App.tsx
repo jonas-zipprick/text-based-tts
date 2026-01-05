@@ -5,6 +5,7 @@ import { GameBoard } from './components/GameBoard';
 function App() {
   const { campaign, loading, error, socket } = useCampaign();
   const [isGM, setIsGM] = useState(false);
+  const [isDaytime, setIsDaytime] = useState(true);
   const [sessionId, setSessionId] = useState("239981"); // Default to player 1
   const [stageScale, setStageScale] = useState<number>(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
@@ -27,6 +28,10 @@ function App() {
           GM Mode
         </label>
         <label>
+          <input type="checkbox" checked={isDaytime} onChange={e => setIsDaytime(e.target.checked)} />
+          Daytime
+        </label>
+        <label>
           <input
             type="text"
             value={sessionId}
@@ -40,6 +45,7 @@ function App() {
         campaign={campaign}
         onTokenMove={handleTokenMove}
         isGM={isGM}
+        isDaytime={isDaytime}
         sessionId={sessionId}
         stageScale={stageScale}
         setStageScale={setStageScale}

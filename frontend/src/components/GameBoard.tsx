@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line } from 'react-konva';
 import useImage from 'use-image';
 import type { Campaign, Token, Point, Wall } from '../../../shared';
-import { calculateVisibilityPolygon, isPointInPolygon } from '../utils/lighting';
+import { calculateVisibilityPolygon, isPointInPolygon, unionPolygons, intersectPolygons } from '../utils/lighting';
 
 interface GameBoardProps {
     campaign: Campaign;
     onTokenMove: (tokenId: number, position: { map: number, x: number, y: number }) => void;
     isGM: boolean;
+    isDaytime: boolean;
     sessionId: string;
     stageScale: number;
     setStageScale: (scale: number) => void;
@@ -89,6 +90,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     campaign,
     onTokenMove,
     isGM,
+    isDaytime,
     sessionId,
     stageScale,
     setStageScale,
@@ -116,6 +118,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const mapHeight = activeMap.grid.height * gridSize;
 
 
+    // ... imports
+
+    // ... (previous code)
+
     // Compute Visibility
     const visionPolys = useMemo(() => {
         if (isGM) return null;
@@ -127,24 +133,61 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             end: { x: w.end.x * wallScaler, y: w.end.y * wallScaler }
         }));
 
-        // 1. My Tokens (Night Vision) ONLY
+        // 1. Calculate Global Lit Area (Map Lights)
+        // Note: For now we only have map lights. If tokens emit light, we'd add them here too.
+        // We cast a visibility polygon for each light to account for walls blocking the light.
+        const lightPolys: Point[][] = [];
+        (activeMap.lights || []).forEach(light => {
+            // Light coords might need scaling if map unit is different?
+            // Assuming lights are in grid coords because shared/index.ts says x,y.
+            // But wait, walls are pixels or cells. Lights likely follow the grid?
+            // campaign.yaml says lights x: 20, y: 12. That's grid cells.
+            const lightPos = {
+                x: light.x * gridSize + gridSize / 2,
+                y: light.y * gridSize + gridSize / 2
+            };
+            const radius = light.radius * gridSize;
+            lightPolys.push(calculateVisibilityPolygon(lightPos, walls, radius));
+        });
+
+        // Also check if any tokens emit light (future proofing, though not fully implemented in UI yet)
+        campaign.tokens.forEach(t => {
+            if (t.visibility.emit_light?.enabled && t.position?.some(p => p.map === activeMap.id)) {
+                const pos = t.position.find(p => p.map === activeMap.id)!;
+                const lightPos = { x: pos.x * gridSize + gridSize / 2, y: pos.y * gridSize + gridSize / 2 };
+                const radius = t.visibility.emit_light.radius * gridSize;
+                lightPolys.push(calculateVisibilityPolygon(lightPos, walls, radius));
+            }
+        });
+
+        // 2. Calculate Vision for My Tokens
         const myTokens = campaign.tokens.filter(t => t.controlled_by.some(c => c.sessionId === sessionId));
         myTokens.forEach(t => {
-            if (t.visibility.night_vision) {
-                const pos = t.position?.find(p => p.map === activeMap.id);
-                if (pos) {
-                    const p = { x: pos.x * gridSize + gridSize / 2, y: pos.y * gridSize + gridSize / 2 };
-                    const radius = (t.visibility.view_distance || 12) * gridSize;
-                    polys.push(calculateVisibilityPolygon(p, walls, radius));
+            const pos = t.position?.find(p => p.map === activeMap.id);
+            if (pos) {
+                const p = { x: pos.x * gridSize + gridSize / 2, y: pos.y * gridSize + gridSize / 2 };
+                const radius = (t.visibility.view_distance || 12) * gridSize;
+                const losPoly = calculateVisibilityPolygon(p, walls, radius);
+
+                // During daytime, all tokens see as if they have night vision
+                if (isDaytime || t.visibility.night_vision) {
+                    // Sees everything in LoS
+                    polys.push(losPoly);
+                } else {
+                    // Normal Vision: Sees LoS INTERSECT (Global Lights UNION "Self Light"?)
+                    // If the token emits light, it's already in lightPolys.
+                    // If it doesn't, it relies on external lights.
+                    // So we intersect LoS with the union of all lights.
+                    // If no lights exist, result is empty (blind in dark).
+
+                    const visibleParts = intersectPolygons(losPoly, lightPolys);
+                    polys.push(...visibleParts);
                 }
             }
         });
 
-        // REMOVED: Global Lights and Other Token Lights do not reveal FOW automatically.
-        // This enforces "I should initially see nothing until I am assigned to a token."
-
         return polys;
-    }, [campaign, isGM, sessionId, activeMap, gridSize]);
+    }, [campaign, isGM, isDaytime, sessionId, activeMap, gridSize]);
 
     // Persistent Fog Layer Management
     // We need to maintain `exploredPolys`.

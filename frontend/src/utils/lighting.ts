@@ -1,4 +1,5 @@
 import type { Point, Wall } from '../../../shared';
+import polygonClipping from 'polygon-clipping';
 
 export type Segment = { a: Point; b: Point };
 
@@ -60,6 +61,107 @@ function getIntersection(ray: { start: Point; end: Point }, segment: Segment): P
         x: r_px + r_dx * T1,
         y: r_py + r_dy * T1,
     };
+}
+
+type Coord = [number, number];
+type Poly = Coord[];
+
+const PRECISION = 1000; // 3 decimal places
+function round(n: number) {
+    return Math.round(n * PRECISION) / PRECISION;
+}
+
+export function pointsToPoly(points: Point[]): Poly {
+    // Round and deduplicate points to prevent degenerate edge errors in polygon-clipping
+    const poly: Poly = [];
+    if (points.length === 0) return poly;
+
+    let lastX = NaN;
+    let lastY = NaN;
+
+    for (const p of points) {
+        const x = round(p.x);
+        const y = round(p.y);
+
+        if (x !== lastX || y !== lastY) {
+            poly.push([x, y]);
+            lastX = x;
+            lastY = y;
+        }
+    }
+
+    // Check last point vs first point for closure (optional, but good for loop)
+    if (poly.length > 1) {
+        const first = poly[0];
+        const last = poly[poly.length - 1];
+        if (first[0] === last[0] && first[1] === last[1]) {
+            poly.pop();
+        }
+    }
+
+    // Polygon must have at least 3 points to be valid for clipping?
+    // polygon-clipping might handle less, but geometrically it implies area.
+    return poly;
+}
+
+export function polyToPoints(poly: Poly): Point[] {
+    return poly.map(p => ({ x: p[0], y: p[1] }));
+}
+
+export function unionPolygons(polys: Point[][]): Point[][] {
+    if (polys.length === 0) return [];
+    try {
+        const rings = polys.map(pointsToPoly).filter(p => p.length >= 3);
+        if (rings.length === 0) return [];
+
+        // polygon-clipping expects Polygon = [OuterRing, Hole1, Hole2, ...]
+        // and union(...polygons) where each arg is a Polygon.
+        // We have light shapes which are simple rings (no holes).
+        // So each light should be: [ ringCoords ] (a Polygon with just an outer ring)
+        // And we pass them as separate arguments or as an array of Polygons.
+        // polygon-clipping.union(poly1, poly2, ...) or union([poly1, poly2, ...])
+        // Actually, looking at types: union(...polygons: MultiPolygon[]): MultiPolygon
+        // MultiPolygon = Polygon[] = Ring[][]
+        // So each input is already a Polygon[] (MultiPolygon).
+        // We need: polygonClipping.union([ring1], [ring2]) where [ring1] is Polygon with outer ring.
+
+        // CORRECT: Each light ring should be wrapped: [[ringCoords]] = MultiPolygon with 1 Polygon
+        // Then spread them: union(...multiPolys)
+        const multiPolys = rings.map(ring => [[ring]]); // [ MultiPolygon, MultiPolygon, ... ]
+
+        const result = polygonClipping.union(...multiPolys as any);
+        // Result: MultiPolygon = [ [OuterRing, Hole...], ... ]
+        // Flatten to just outer rings
+        return result.map(poly => polyToPoints(poly[0]));
+    } catch (e) {
+        console.warn("Polygon union failed", e);
+        return polys;
+    }
+}
+
+export function intersectPolygons(poly1: Point[], poly2: Point[][]): Point[][] {
+    if (poly2.length === 0) return [];
+    try {
+        const p1Ring = pointsToPoly(poly1);
+        if (p1Ring.length < 3) return [];
+
+        const p2Rings = poly2.map(pointsToPoly).filter(p => p.length >= 3);
+        if (p2Rings.length === 0) return [];
+
+        // Union all light polygons first
+        const lightMultiPolys = p2Rings.map(ring => [[ring]]);
+        const lightsUnion = polygonClipping.union(...lightMultiPolys as any);
+
+        // Intersect LoS polygon with union of lights
+        // LoS is a single polygon: [[p1Ring]]
+        const losMultiPoly = [[p1Ring]];
+        const result = polygonClipping.intersection(losMultiPoly as any, lightsUnion);
+
+        return result.map(poly => polyToPoints(poly[0]));
+    } catch (e) {
+        console.warn("Polygon intersection failed", e);
+        return [poly1];
+    }
 }
 
 export function calculateVisibilityPolygon(origin: Point, walls: Wall[], maxRadius: number): Point[] {
