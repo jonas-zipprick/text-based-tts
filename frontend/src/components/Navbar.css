@@ -1,0 +1,73 @@
+.nav-bar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 50;
+    padding: 8px 16px;
+    background: #fdf1dc;
+    border: 2px solid #58180d;
+    border-radius: 4px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    font-family: 'Libre Baskerville', 'Georgia', serif;
+    color: #333;
+}
+
+.nav-select {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #58180d;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    padding: 4px;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s;
+}
+
+.nav-select:hover {
+    background: rgba(88, 24, 13, 0.05);
+}
+
+.nav-select:focus {
+    background: rgba(88, 24, 13, 0.1);
+}
+
+.nav-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #58180d;
+}
+
+.nav-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #58180d;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    width: 80px;
+    padding: 2px 4px;
+    text-align: center;
+}
+
+.nav-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.5);
+    border-bottom-style: solid;
+}
+
+/* Checkbox styling */
+.nav-checkbox {
+    accent-color: #58180d;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}

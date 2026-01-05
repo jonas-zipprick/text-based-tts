@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
+import './components/Navbar.css';
 import type { GameView } from './types/types';
 import type { Token } from '../../shared';
 
@@ -71,11 +72,11 @@ function App() {
 
   return (
     <div className="w-screen h-screen bg-black flex flex-col">
-      <div className="absolute top-0 right-0 z-50 p-2 bg-gray-800 text-white rounded flex gap-4">
+      <div className="nav-bar">
         <select
           value={campaign.activeMapId}
           onChange={e => handleMapChange(Number(e.target.value))}
-          className="text-black bg-white px-1 mr-2"
+          className="nav-select"
         >
           {campaign.maps.map(m => (
             <option key={m.id} value={m.id}>{m.name}</option>
@@ -84,22 +85,28 @@ function App() {
         <select
           value={view}
           onChange={e => setView(e.target.value as GameView)}
-          className="text-black bg-white px-1"
+          className="nav-select"
         >
           <option value="player">Player View</option>
           <option value="dm">DM View</option>
           <option value="editor">Map Editor View</option>
         </select>
-        <label>
-          <input type="checkbox" checked={isDaytime} onChange={e => setIsDaytime(e.target.checked)} />
+        <label className="nav-label">
+          <input
+            type="checkbox"
+            checked={isDaytime}
+            onChange={e => setIsDaytime(e.target.checked)}
+            className="nav-checkbox"
+          />
           Daytime
         </label>
-        <label>
+        <label className="nav-label">
           <input
             type="text"
             value={sessionId}
             onChange={e => setSessionId(e.target.value)}
-            className="text-black bg-white px-1 ml-2 w-24"
+            className="nav-input"
+            title="Session ID"
           />
           Session ID
         </label>
