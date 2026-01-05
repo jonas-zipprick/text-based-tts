@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
 
@@ -9,6 +9,12 @@ function App() {
   const [sessionId, setSessionId] = useState("239981"); // Default to player 1
   const [stageScale, setStageScale] = useState<number>(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (campaign) {
+      document.title = `${campaign.name} - TTS`;
+    }
+  }, [campaign]);
 
   if (loading) { console.log("App: Loading..."); return <div className="text-white p-4">Loading campaign...</div>; }
   if (error) { console.log("App: Error", error); return <div className="text-red-500 p-4">Error: {error}</div>; }
