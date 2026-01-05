@@ -244,6 +244,9 @@
                         "night_vision"
                     ]
                 },
+                "currentHp": {
+                    "type": "integer"
+                },
                 "stats": {
                     "type": "object",
                     "properties": {
@@ -350,10 +353,45 @@
                                     },
                                     "type": {
                                         "type": "string"
+                                    },
+                                    "reach": {
+                                        "type": "integer"
+                                    },
+                                    "range": {
+                                        "type": "integer"
+                                    },
+                                    "targets": {
+                                        "type": "integer"
+                                    },
+                                    "modifiers": {
+                                        "type": "object",
+                                        "properties": {
+                                            "attack": {
+                                                "type": "integer"
+                                            }
+                                        }
                                     }
                                 },
                                 "required": [
                                     "name"
+                                ]
+                            }
+                        },
+                        "legendaryActions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "description"
                                 ]
                             }
                         }
