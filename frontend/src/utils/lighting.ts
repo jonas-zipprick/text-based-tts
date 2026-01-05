@@ -224,8 +224,24 @@ export function calculateVisibilityPolygon(origin: Point, walls: Wall[], maxRadi
 
         // Check intersection with all walls
         for (const wall of walls) {
-            // Wall needs to be Segment
-            const segment: Segment = { a: wall.start, b: wall.end };
+            // Robustness fix: Slightly extend segments to prevent light "leaks" through tiny gaps
+            const dx = wall.end.x - wall.start.x;
+            const dy = wall.end.y - wall.start.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+
+            let segment: Segment;
+            if (len > 0) {
+                const ux = dx / len;
+                const uy = dy / len;
+                const margin = 2; // 2px extension
+                segment = {
+                    a: { x: wall.start.x - ux * margin, y: wall.start.y - uy * margin },
+                    b: { x: wall.end.x + ux * margin, y: wall.end.y + uy * margin }
+                };
+            } else {
+                segment = { a: wall.start, b: wall.end };
+            }
+
             const intersect = getIntersection({ start: origin, end: rayEnd }, segment);
             if (intersect) {
                 const dist = Math.sqrt(Math.pow(intersect.x - origin.x, 2) + Math.pow(intersect.y - origin.y, 2));
