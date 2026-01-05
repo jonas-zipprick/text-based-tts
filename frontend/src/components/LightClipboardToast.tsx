@@ -1,34 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import yaml from 'js-yaml';
-import type { Wall } from '../../../shared';
+import type { Light } from '../../../shared';
 
-interface WallClipboardToastProps {
-    walls: Wall[];
+interface LightClipboardToastProps {
+    lights: Light[];
     t: any; // Toast object provided by react-hot-toast
     onClose: () => void;
-    onSave?: (walls: Wall[]) => void;
+    onSave?: (lights: Light[]) => void;
 }
 
-export const WallClipboardToast: React.FC<WallClipboardToastProps> = ({ walls, t, onClose, onSave }) => {
-    const formatWall = (w: Wall) => `  - start: {x: ${Math.round(w.start.x)}, y: ${Math.round(w.start.y)}}
-    end: {x: ${Math.round(w.end.x)}, y: ${Math.round(w.end.y)}}`;
+export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights, t, onClose, onSave }) => {
+    const formatLight = (l: Light) => `  - x: ${Math.round(l.x)}
+    y: ${Math.round(l.y)}
+    radius: ${l.radius}
+    color: "${l.color}"`;
 
-    // Format initial walls
-    const initialText = walls.map(formatWall).join('\n');
+    // Format initial lights
+    const initialText = lights.map(formatLight).join('\n');
     const [editedText, setEditedText] = useState(initialText);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
-    const prevWallsCount = useRef(walls.length);
+    const prevLightsCount = useRef(lights.length);
 
-    // Sync when new walls are added externally (clicks on map)
+    // Sync when new lights are added externally (clicks on map)
     useEffect(() => {
-        if (walls.length > prevWallsCount.current) {
-            const newWalls = walls.slice(prevWallsCount.current);
-            const appendText = newWalls.map(formatWall).join('\n');
+        if (lights.length > prevLightsCount.current) {
+            const newLights = lights.slice(prevLightsCount.current);
+            const appendText = newLights.map(formatLight).join('\n');
             setEditedText(prev => prev ? (prev + '\n' + appendText) : appendText);
         }
-        prevWallsCount.current = walls.length;
-    }, [walls]);
+        prevLightsCount.current = lights.length;
+    }, [lights]);
 
     const handleSave = () => {
         if (!onSave) return;
@@ -38,23 +40,24 @@ export const WallClipboardToast: React.FC<WallClipboardToastProps> = ({ walls, t
                 throw new Error("Invalid format: Must be a list starting with '-'");
             }
 
-            const validatedWalls: Wall[] = parsed.map((item, index) => {
-                const sx = Number(item.start?.x);
-                const sy = Number(item.start?.y);
-                const ex = Number(item.end?.x);
-                const ey = Number(item.end?.y);
+            const validatedLights: Light[] = parsed.map((item, index) => {
+                const x = Number(item.x);
+                const y = Number(item.y);
+                const radius = Number(item.radius);
 
-                if (isNaN(sx) || isNaN(sy) || isNaN(ex) || isNaN(ey)) {
-                    throw new Error(`Wall at index ${index} is missing or has invalid coordinates`);
+                if (isNaN(x) || isNaN(y) || isNaN(radius)) {
+                    throw new Error(`Light at index ${index} has invalid numeric values`);
                 }
 
                 return {
-                    start: { x: sx, y: sy },
-                    end: { x: ex, y: ey }
+                    x,
+                    y,
+                    radius,
+                    color: item.color || "#f1c40f"
                 };
             });
 
-            onSave(validatedWalls);
+            onSave(validatedLights);
         } catch (e: any) {
             toast.error(`YAML Error: ${e.message}`, { id: 'yaml-error' });
         }
@@ -79,7 +82,7 @@ export const WallClipboardToast: React.FC<WallClipboardToastProps> = ({ walls, t
             >
                 ✕
             </button>
-            <h3 className="font-bold text-yellow-400 mb-2 text-sm uppercase tracking-wider">Generated Walls (Editable)</h3>
+            <h3 className="font-bold text-yellow-400 mb-2 text-sm uppercase tracking-wider">Generated Lights (Editable)</h3>
             <textarea
                 ref={textAreaRef}
                 className="w-full bg-black/50 text-xs font-mono p-2 rounded h-40 border border-zinc-700 resize-none focus:outline-none focus:border-yellow-500/50"
@@ -88,7 +91,7 @@ export const WallClipboardToast: React.FC<WallClipboardToastProps> = ({ walls, t
                 spellCheck={false}
             />
             <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
-                <span>{walls.length} walls added</span>
+                <span>{lights.length} lights added</span>
                 <span className="italic cursor-pointer hover:text-white transition-colors" onClick={() => {
                     textAreaRef.current?.select();
                 }}>Edit YAML above before saving</span>

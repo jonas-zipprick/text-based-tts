@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text } from 'react-konva';
 import { toast } from 'react-hot-toast';
 import { WallClipboardToast } from './WallClipboardToast';
+import { LightClipboardToast } from './LightClipboardToast';
 import useImage from 'use-image';
-import type { Campaign, Token, Point, Wall } from '../../../shared';
+import type { Campaign, Token, Point, Wall, Light } from '../../../shared';
 import type { GameView } from '../types/types';
-import { calculateVisibilityPolygon, isPointInPolygon, unionPolygons, intersectPolygons } from '../utils/lighting';
+import { calculateVisibilityPolygon, isPointInPolygon, intersectPolygons } from '../utils/lighting';
 
 interface GameBoardProps {
     campaign: Campaign;
@@ -19,6 +20,8 @@ interface GameBoardProps {
     setStageScale: (scale: number) => void;
     stagePos: { x: number, y: number };
     setStagePos: (pos: { x: number, y: number }) => void;
+    onAddWalls: (mapId: number, walls: Wall[]) => void;
+    onAddLights: (mapId: number, lights: Light[]) => void;
 }
 
 type MouseCoords = {
@@ -167,7 +170,9 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
     );
 };
 
-export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId, stageScale, setStageScale, stagePos, setStagePos }: GameBoardProps) => {
+type EditorTool = 'select' | 'wall' | 'light';
+
+export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId, stageScale, setStageScale, stagePos, setStagePos, onAddWalls, onAddLights }: GameBoardProps) => {
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
     if (!activeMap) return <div className="text-white p-4">Map not found.</div>;
 
@@ -175,9 +180,11 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
     const isGM = view === 'dm' || view === 'editor';
     const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
-    // Wall Builder State
+    // Map Editor State
+    const [activeTool, setActiveTool] = useState<EditorTool>('select');
     const [wallBuilderStart, setWallBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [wallBuilderWalls, setWallBuilderWalls] = useState<Wall[]>([]);
+    const [lightBuilderLights, setLightBuilderLights] = useState<Light[]>([]);
 
     useEffect(() => {
         const handleResize = () => setSize({ width: window.innerWidth, height: window.innerHeight });
@@ -337,7 +344,7 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
     };
 
     const handleStageClick = (e: any) => {
-        if (view !== 'editor') return;
+        if (view !== 'editor' || activeTool === 'select') return;
         const stage = e.target.getStage();
         if (stage.isDragging()) return;
 
@@ -346,25 +353,61 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
 
         const pixelX = (pointer.x - stagePos.x) / stageScale;
         const pixelY = (pointer.y - stagePos.y) / stageScale;
+        const gridX = Math.round(pixelX / gridSize);
+        const gridY = Math.round(pixelY / gridSize);
         const clickPoint = { x: Math.round(pixelX), y: Math.round(pixelY) };
 
-        if (!wallBuilderStart) {
-            setWallBuilderStart(clickPoint);
-            toast('Click endpoint to finish wall', { id: 'wall-hint', duration: 2000, icon: '✏️' });
-        } else {
-            const newWall: Wall = { start: wallBuilderStart, end: clickPoint };
-            const updatedWalls = [...wallBuilderWalls, newWall];
-            setWallBuilderWalls(updatedWalls);
-            setWallBuilderStart(null);
+        if (activeTool === 'wall') {
+            if (!wallBuilderStart) {
+                setWallBuilderStart(clickPoint);
+                toast('Click endpoint to finish wall', { id: 'wall-hint', duration: 2000, icon: '✏️' });
+            } else {
+                const newWall: Wall = { start: wallBuilderStart, end: clickPoint };
+                const updatedWalls = [...wallBuilderWalls, newWall];
+                setWallBuilderWalls(updatedWalls);
+                setWallBuilderStart(null);
+
+                toast.custom((t) => (
+                    <WallClipboardToast
+                        walls={updatedWalls}
+                        t={t}
+                        onClose={() => setWallBuilderWalls([])}
+                        onSave={(editedWalls) => {
+                            onAddWalls(activeMapId, editedWalls);
+                            setWallBuilderWalls([]);
+                            toast.success("Walls saved!");
+                            toast.dismiss(t.id);
+                        }}
+                    />
+                ), {
+                    id: 'wall-builder',
+                    duration: Infinity
+                });
+            }
+        } else if (activeTool === 'light') {
+            const newLight: Light = {
+                x: gridX,
+                y: gridY,
+                radius: 6, // Default radius
+                color: "#f1c40f" // Default color
+            };
+            const updatedLights = [...lightBuilderLights, newLight];
+            setLightBuilderLights(updatedLights);
 
             toast.custom((t) => (
-                <WallClipboardToast
-                    walls={updatedWalls}
+                <LightClipboardToast
+                    lights={updatedLights}
                     t={t}
-                    onClose={() => setWallBuilderWalls([])}
+                    onClose={() => setLightBuilderLights([])}
+                    onSave={(editedLights) => {
+                        onAddLights(activeMapId, editedLights);
+                        setLightBuilderLights([]);
+                        toast.success("Lights saved!");
+                        toast.dismiss(t.id);
+                    }}
                 />
             ), {
-                id: 'wall-builder',
+                id: 'light-builder',
                 duration: Infinity
             });
         }
@@ -506,9 +549,9 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                                 <Circle
                                     radius={light.radius * gridSize}
                                     stroke={light.color || "#f1c40f"}
-                                    strokeWidth={1}
-                                    dash={[5, 5]}
-                                    opacity={0.6}
+                                    strokeWidth={3}
+                                    dash={[10, 10]}
+                                    opacity={0.8}
                                     listening={false}
                                 />
                                 {/* Icon Background */}
@@ -583,6 +626,44 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                     </Layer>
                 )}
             </Stage>
+
+            {/* Editor Toolbar */}
+            {view === 'editor' && (
+                <div style={{
+                    position: 'absolute',
+                    top: '60px',
+                    right: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    zIndex: 1000
+                }}>
+                    <button
+                        onClick={() => setActiveTool('select')}
+                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'select' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                        title="Selection Tool"
+                    >
+                        🖱️
+                    </button>
+                    <button
+                        onClick={() => {
+                            setActiveTool('wall');
+                            setWallBuilderStart(null);
+                        }}
+                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'wall' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                        title="Wall Builder"
+                    >
+                        🧱
+                    </button>
+                    <button
+                        onClick={() => setActiveTool('light')}
+                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'light' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                        title="Light Tool"
+                    >
+                        💡
+                    </button>
+                </div>
+            )}
 
             {/* Coordinate Overlay */}
             {mousePos && (

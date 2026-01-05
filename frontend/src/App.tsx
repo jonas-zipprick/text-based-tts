@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
 import './components/Navbar.css';
 import type { GameView } from './types/types';
-import type { Token, RollEvent } from '../../shared';
+import type { Token, RollEvent, Wall, Light } from '../../shared';
 import { ToastNotification } from './components/ToastNotification';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -84,6 +84,18 @@ function App() {
     }
   }, [socket]);
 
+  const handleAddWalls = useCallback((mapId: number, walls: Wall[]) => {
+    if (socket) {
+      socket.emit('add-walls', { mapId, walls });
+    }
+  }, [socket]);
+
+  const handleAddLights = useCallback((mapId: number, lights: Light[]) => {
+    if (socket) {
+      socket.emit('add-lights', { mapId, lights });
+    }
+  }, [socket]);
+
   const hasControlledTokens = useMemo(() => {
     if (!campaign) return false;
     return campaign.tokens.some(t => t.controlled_by?.some(c => c.sessionId === sessionId));
@@ -146,6 +158,8 @@ function App() {
         setStageScale={setStageScale}
         stagePos={stagePos}
         setStagePos={setStagePos}
+        onAddWalls={handleAddWalls}
+        onAddLights={handleAddLights}
       />
       {selectedToken && (
         <CharacterSheet

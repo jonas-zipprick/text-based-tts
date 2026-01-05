@@ -120,6 +120,14 @@ io.on('connection', (socket) => {
     socket.on('roll', (data: any) => {
         socket.broadcast.emit('roll', data);
     });
+
+    socket.on('add-walls', (data: { mapId: number, walls: any[] }) => {
+        campaignManager.addWalls(data.mapId, data.walls);
+    });
+
+    socket.on('add-lights', (data: { mapId: number, lights: any[] }) => {
+        campaignManager.addLights(data.mapId, data.lights);
+    });
 });
 
 const PORT = 3000;

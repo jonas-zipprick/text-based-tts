@@ -11,6 +11,7 @@ export class CampaignManager {
     private currentCampaign: Campaign | null = null;
     private watcher: chokidar.FSWatcher | null = null;
     private tokenSourceMap: Map<number, string> = new Map();
+    private mapSourceMap: Map<number, string> = new Map();
     private lastWrittenVersion: number = 0;
 
 
@@ -32,6 +33,7 @@ export class CampaignManager {
             version: preservedVersion,
         };
         this.tokenSourceMap.clear();
+        this.mapSourceMap.clear();
 
         const files = this.getAllYamlFiles(this.campaignDir);
 
@@ -50,7 +52,11 @@ export class CampaignManager {
                 // Merge properties
                 if (data.name) campaign.name = data.name;
                 if (data.activeMapId !== undefined) campaign.activeMapId = data.activeMapId;
-                if (data.maps) campaign.maps.push(...(data.maps as MapData[]));
+                if (data.maps) {
+                    const newMaps = data.maps as MapData[];
+                    campaign.maps.push(...newMaps);
+                    newMaps.forEach(m => this.mapSourceMap.set(m.id, file));
+                }
                 if (data.tokens) {
                     const tokens = (data.tokens as Token[]).map(t => ({
                         ...t,
@@ -268,6 +274,108 @@ export class CampaignManager {
                 }
             }
         });
+    }
+
+    public addWalls(mapId: number, newWalls: any[]) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) {
+            console.error(`Source file for map ${mapId} not found. Available maps:`, Array.from(this.mapSourceMap.keys()));
+            return;
+        }
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) {
+                console.error(`No maps section in ${filePath}`);
+                return;
+            }
+
+            const mapItem = maps.items.find((item: any) => {
+                const id = item.get ? item.get('id') : item.id;
+                return id === mapId;
+            }) as YAMLMap;
+
+            if (mapItem) {
+                if (!mapItem.has('walls')) {
+                    mapItem.set('walls', new YAMLSeq());
+                }
+                const wallsSeq = mapItem.get('walls') as YAMLSeq;
+
+                newWalls.forEach(w => {
+                    const wallMap = new YAMLMap();
+                    const startMap = new YAMLMap();
+                    startMap.set('x', w.start.x);
+                    startMap.set('y', w.start.y);
+
+                    const endMap = new YAMLMap();
+                    endMap.set('x', w.end.x);
+                    endMap.set('y', w.end.y);
+
+                    wallMap.set('start', startMap);
+                    wallMap.set('end', endMap);
+                    wallsSeq.add(wallMap);
+                });
+
+                fs.writeFileSync(filePath, doc.toString());
+                console.log(`Added ${newWalls.length} walls to map ${mapId} in ${filePath}`);
+            } else {
+                console.error(`Map ${mapId} not found in ${filePath}`);
+            }
+
+        } catch (e) {
+            console.error(`Error adding walls in ${filePath}:`, e);
+        }
+    }
+
+    public addLights(mapId: number, newLights: any[]) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) {
+            console.error(`Source file for map ${mapId} not found. Available maps:`, Array.from(this.mapSourceMap.keys()));
+            return;
+        }
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) {
+                console.error(`No maps section in ${filePath}`);
+                return;
+            }
+
+            const mapItem = maps.items.find((item: any) => {
+                const id = item.get ? item.get('id') : item.id;
+                return id === mapId;
+            }) as YAMLMap;
+
+            if (mapItem) {
+                if (!mapItem.has('lights')) {
+                    mapItem.set('lights', new YAMLSeq());
+                }
+                const lightsSeq = mapItem.get('lights') as YAMLSeq;
+
+                newLights.forEach(l => {
+                    const lightMap = new YAMLMap();
+                    lightMap.set('x', l.x);
+                    lightMap.set('y', l.y);
+                    lightMap.set('radius', l.radius);
+                    lightMap.set('color', l.color);
+                    lightsSeq.add(lightMap);
+                });
+
+                fs.writeFileSync(filePath, doc.toString());
+                console.log(`Added ${newLights.length} lights to map ${mapId} in ${filePath}`);
+            } else {
+                console.error(`Map ${mapId} not found in ${filePath}`);
+            }
+
+        } catch (e) {
+            console.error(`Error adding lights in ${filePath}:`, e);
+        }
     }
 
     private getAllYamlFiles(dir: string, fileList: string[] = []): string[] {
