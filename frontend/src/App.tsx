@@ -108,6 +108,12 @@ function App() {
     }
   }, [socket]);
 
+  const handleAddToken = useCallback((blueprintId: number, mapId: number, x: number, y: number) => {
+    if (socket) {
+      socket.emit('add-token', { blueprintId, mapId, x, y });
+    }
+  }, [socket]);
+
   const hasControlledTokens = useMemo(() => {
     if (!campaign) return false;
     return campaign.tokens.some(t => t.controlled_by?.some(c => c.sessionId === sessionId));
@@ -174,6 +180,7 @@ function App() {
         onAddLights={handleAddLights}
         onRemoveWall={handleRemoveWall}
         onRemoveLight={handleRemoveLight}
+        onAddToken={handleAddToken}
       />
       {selectedToken && (
         <CharacterSheet

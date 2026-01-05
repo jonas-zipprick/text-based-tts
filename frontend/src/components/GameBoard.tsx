@@ -24,6 +24,7 @@ interface GameBoardProps {
     onAddLights: (mapId: number, lights: Light[]) => void;
     onRemoveWall: (mapId: number, wall: Wall) => void;
     onRemoveLight: (mapId: number, light: Light) => void;
+    onAddToken: (blueprintId: number, mapId: number, x: number, y: number) => void;
 }
 
 type MouseCoords = {
@@ -172,13 +173,13 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
     );
 };
 
-type EditorTool = 'select' | 'wall' | 'light' | 'trash';
+type EditorTool = 'select' | 'wall' | 'light' | 'trash' | 'npc';
 
 export const GameBoard = (props: GameBoardProps) => {
     const {
         campaign, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId,
         activeMapId, stageScale, setStageScale, stagePos, setStagePos,
-        onAddWalls, onAddLights, onRemoveWall, onRemoveLight
+        onAddWalls, onAddLights, onRemoveWall, onRemoveLight, onAddToken
     } = props;
 
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
@@ -193,6 +194,10 @@ export const GameBoard = (props: GameBoardProps) => {
     const [wallBuilderStart, setWallBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [wallBuilderWalls, setWallBuilderWalls] = useState<Wall[]>([]);
     const [lightBuilderLights, setLightBuilderLights] = useState<Light[]>([]);
+
+    // NPC Search State
+    const [npcSearch, setNpcSearch] = useState('');
+    const [selectedBlueprint, setSelectedBlueprint] = useState<Token | null>(null);
 
     useEffect(() => {
         const handleResize = () => setSize({ width: window.innerWidth, height: window.innerHeight });
@@ -364,7 +369,7 @@ export const GameBoard = (props: GameBoardProps) => {
     };
 
     const handleStageClick = (e: any) => {
-        if (view !== 'editor' || activeTool === 'select') return;
+        if (!isGM || activeTool === 'select') return;
         const stage = e.target.getStage();
         if (stage.isDragging()) return;
 
@@ -454,6 +459,8 @@ export const GameBoard = (props: GameBoardProps) => {
             if (hitWall) {
                 onRemoveWall(activeMapId, hitWall);
             }
+        } else if (activeTool === 'npc' && selectedBlueprint) {
+            onAddToken(selectedBlueprint.id, activeMapId, gridX, gridY);
         }
     };
 
@@ -672,7 +679,7 @@ export const GameBoard = (props: GameBoardProps) => {
             </Stage>
 
             {/* Editor Toolbar */}
-            {view === 'editor' && (
+            {isGM && (
                 <div style={{
                     position: 'absolute',
                     top: '60px',
@@ -689,30 +696,124 @@ export const GameBoard = (props: GameBoardProps) => {
                     >
                         🖱️
                     </button>
+                    {view === 'editor' && (
+                        <>
+                            <button
+                                onClick={() => {
+                                    setActiveTool('wall');
+                                    setWallBuilderStart(null);
+                                }}
+                                className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'wall' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                                title="Wall Builder"
+                            >
+                                🧱
+                            </button>
+                            <button
+                                onClick={() => setActiveTool('light')}
+                                className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'light' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                                title="Light Tool"
+                            >
+                                💡
+                            </button>
+                            <button
+                                className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'trash' ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                                onClick={() => setActiveTool('trash')}
+                                title="Trash Tool"
+                            >
+                                🗑️
+                            </button>
+                        </>
+                    )}
                     <button
                         onClick={() => {
-                            setActiveTool('wall');
-                            setWallBuilderStart(null);
+                            setActiveTool('npc');
+                            setNpcSearch('');
+                            setSelectedBlueprint(null);
                         }}
-                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'wall' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
-                        title="Wall Builder"
+                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'npc' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                        title="Add NPC Tool"
                     >
-                        🧱
+                        👥
                     </button>
-                    <button
-                        onClick={() => setActiveTool('light')}
-                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'light' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
-                        title="Light Tool"
-                    >
-                        💡
-                    </button>
-                    <button
-                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'trash' ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
-                        onClick={() => setActiveTool('trash')}
-                        title="Trash Tool"
-                    >
-                        🗑️
-                    </button>
+                </div>
+            )}
+
+            {/* NPC Search Bar */}
+            {isGM && activeTool === 'npc' && (
+                <div style={{
+                    position: 'absolute',
+                    top: '60px',
+                    right: '50px',
+                    width: '300px',
+                    backgroundColor: '#18181b', // zinc-900
+                    border: '1px solid #3f3f46', // zinc-700
+                    borderRadius: '8px',
+                    padding: '8px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                    zIndex: 1001,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                }}>
+                    <input
+                        type="text"
+                        placeholder="Search NPC..."
+                        value={npcSearch}
+                        onChange={(e) => setNpcSearch(e.target.value)}
+                        autoFocus
+                        style={{
+                            backgroundColor: '#09090b', // zinc-950
+                            border: '1px solid #52525b', // zinc-600
+                            borderRadius: '4px',
+                            color: 'white',
+                            padding: '4px 8px',
+                            fontSize: '14px',
+                            width: '100%'
+                        }}
+                    />
+                    <div style={{
+                        maxHeight: '400px',
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px'
+                    }}>
+                        {Array.from(new Map(
+                            campaign.tokens
+                                .filter(t => t.name.toLowerCase().includes(npcSearch.toLowerCase()))
+                                .map(t => [t.name, t])
+                        ).values())
+                            .slice(0, 50)
+                            .map(blueprint => (
+                                <button
+                                    key={blueprint.id}
+                                    onClick={() => setSelectedBlueprint(blueprint)}
+                                    style={{
+                                        textAlign: 'left',
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '13px',
+                                        transition: 'background-color 0.2s',
+                                        backgroundColor: selectedBlueprint?.id === blueprint.id ? '#ca8a04' : 'transparent', // yellow-600
+                                        color: selectedBlueprint?.id === blueprint.id ? 'white' : '#d4d4d8', // zinc-300
+                                        border: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (selectedBlueprint?.id !== blueprint.id) {
+                                            e.currentTarget.style.backgroundColor = '#27272a'; // zinc-800
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (selectedBlueprint?.id !== blueprint.id) {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                        }
+                                    }}
+                                >
+                                    {blueprint.name}
+                                </button>
+                            ))}
+                    </div>
                 </div>
             )}
 

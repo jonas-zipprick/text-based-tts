@@ -136,6 +136,18 @@ io.on('connection', (socket) => {
     socket.on('remove-light', ({ mapId, light }) => {
         campaignManager.removeLight(mapId, light);
     });
+
+    socket.on('add-token', (data: { blueprintId: number, mapId: number, x: number, y: number }) => {
+        const newToken = campaignManager.addToken(data.blueprintId, data.mapId, data.x, data.y);
+        if (newToken) {
+            // Optimistically update memory and broadcast
+            const campaign = campaignManager.getCampaign();
+            if (campaign) {
+                campaign.tokens.push(newToken);
+                io.emit('campaign-update', campaign);
+            }
+        }
+    });
 });
 
 const PORT = 3000;

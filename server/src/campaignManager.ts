@@ -161,6 +161,51 @@ export class CampaignManager {
         }
     }
 
+    public addToken(blueprintId: number, mapId: number, x: number, y: number): Token | null {
+        // Find blueprint
+        const blueprint = this.currentCampaign?.tokens.find(t => t.id === blueprintId);
+        if (!blueprint) return null;
+
+        // Create new ID
+        const maxId = this.currentCampaign?.tokens.reduce((max, t) => Math.max(max, t.id), 0) || 0;
+        const newId = maxId + 1;
+
+        // Copy and setup new token
+        const newToken: Token = JSON.parse(JSON.stringify(blueprint));
+        newToken.id = newId;
+        newToken.position = [{ map: mapId, x, y }];
+        // NPCs are typically not controlled by anyone initially
+        newToken.controlled_by = [];
+
+        // Persist to campaign.yaml
+        const filePath = path.join(this.campaignDir, 'campaign.yaml');
+        try {
+            let doc;
+            if (fs.existsSync(filePath)) {
+                const content = fs.readFileSync(filePath, 'utf8');
+                doc = parseDocument(content);
+            } else {
+                doc = parseDocument('name: New Campaign\nactiveMapId: 0\n');
+            }
+
+            if (!doc.has('tokens')) {
+                doc.set('tokens', new YAMLSeq());
+            }
+            const tokensSeq = doc.get('tokens') as YAMLSeq;
+            tokensSeq.add(newToken);
+
+            fs.writeFileSync(filePath, doc.toString());
+
+            // Update in-memory source map
+            this.tokenSourceMap.set(newId, filePath);
+
+            return newToken;
+        } catch (e) {
+            console.error('Error adding token:', e);
+            return null;
+        }
+    }
+
     public watch(callback: (campaign: Campaign) => void) {
         if (this.watcher) this.watcher.close();
 
