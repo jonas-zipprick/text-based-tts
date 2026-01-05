@@ -1,4 +1,4 @@
-# PnP Board Online
+# Text Based Table Top Simulator
 
 ## Description
 This application is a table top simulator for pen and paper games like Dungeans and Dragons similar to roll20.
