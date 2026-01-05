@@ -11,17 +11,25 @@ export class CampaignManager {
     private currentCampaign: Campaign | null = null;
     private watcher: chokidar.FSWatcher | null = null;
     private tokenSourceMap: Map<number, string> = new Map();
+    private lastWrittenVersion: number = 0;
+
 
     constructor(campaignDir: string) {
         this.campaignDir = campaignDir;
     }
 
+
+
     public loadCampaign(): Campaign {
+        // Preserve version from current campaign or use lastWrittenVersion
+        const preservedVersion = this.currentCampaign?.version ?? this.lastWrittenVersion;
+
         const campaign: Campaign = {
             name: 'New Campaign',
             activeMapId: 0,
             maps: [],
             tokens: [],
+            version: preservedVersion,
         };
         this.tokenSourceMap.clear();
 
@@ -71,8 +79,11 @@ export class CampaignManager {
             console.warn("loadCampaign: Returning 0 maps!", { previousMaps: this.currentCampaign?.maps?.length });
         }
 
-        this.currentCampaign = campaign;
         // console.log(`Loaded campaign "${campaign.name}" with ${campaign.maps.length} maps and ${campaign.tokens.length} tokens.`);
+
+        if (!this.currentCampaign) {
+            this.currentCampaign = campaign;
+        }
         return campaign;
     }
 
@@ -237,9 +248,24 @@ export class CampaignManager {
         this.watcher.on('all', (event, path) => {
             if (path.endsWith('.yaml') || path.endsWith('.yml')) {
                 console.log(`File ${path} changed (${event}), reloading campaign...`);
-                // Debounce handled by awaitWriteFinish somewhat, but keeping explicit reload
-                const campaign = this.loadCampaign();
-                callback(campaign);
+
+                const newCampaign = this.loadCampaign();
+
+                // Deep comparison to avoid redundant updates (glitch fix)
+                // We strip the version field for comparison if we decide to persist it later, 
+                // but for now relying on strict JSON equality of the content.
+                // Note: We need to ensure we don't compare the version field if it's just a counter we manage.
+
+                const currentJson = JSON.stringify(this.currentCampaign);
+                const newJson = JSON.stringify(newCampaign);
+
+                if (currentJson !== newJson) {
+                    console.log('Campaign changed externally, broadcasting update.');
+                    this.currentCampaign = newCampaign;
+                    callback(newCampaign);
+                } else {
+                    console.log('Campaign file changed but content matches in-memory state (likely internal write). suppressing update.');
+                }
             }
         });
     }

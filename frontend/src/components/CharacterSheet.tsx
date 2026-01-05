@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Token } from '../../../shared';
 import './CharacterSheet.css';
 
@@ -32,23 +32,36 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     // Local state for editing
     const [localToken, setLocalToken] = useState<Token>(token);
     const [hpInput, setHpInput] = useState('');
-
+    // Track when we're waiting for our own save to complete
+    const pendingSaveRef = useRef<string | null>(null);
 
     // Debounced token for auto-save
     const debouncedToken = useDebounce(localToken, 300);
 
-    // Sync with external token updates
+    // Sync with external token updates (but not our own saves echoing back)
     useEffect(() => {
-        setLocalToken(token);
+        const incomingJson = JSON.stringify(token);
+        // Only sync if this wasn't our own save coming back
+        if (pendingSaveRef.current !== incomingJson) {
+            setLocalToken(token);
+        }
     }, [token]);
 
     // Auto-save when debounced token changes
     useEffect(() => {
+        const debouncedJson = JSON.stringify(debouncedToken);
+        const tokenJson = JSON.stringify(token);
         // Only save if token actually changed from original
-        if (JSON.stringify(debouncedToken) !== JSON.stringify(token)) {
-            onUpdate(debouncedToken.id, debouncedToken);
+        if (debouncedJson !== tokenJson) {
+            // Mark this as our pending save so we don't re-sync it
+            pendingSaveRef.current = debouncedJson;
+
+            // Strip position and other non-editable fields to prevent overwriting updates
+            const { position, controlled_by, ...updates } = debouncedToken;
+            onUpdate(debouncedToken.id, updates);
         }
-    }, [debouncedToken, token, onUpdate]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedToken, onUpdate]);
 
     // Handle escape key
     useEffect(() => {

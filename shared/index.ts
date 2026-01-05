@@ -105,6 +105,7 @@ export type Campaign = {
     activeMapId: number;
     maps: MapData[];
     tokens: Token[];
+    version: number; // In-memory version counter for change tracking
 };
 
 export type GameState = {
