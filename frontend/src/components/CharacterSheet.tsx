@@ -79,6 +79,22 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
+    // Auto-resize textareas
+    const autoResizeAll = useCallback(() => {
+        const textareas = document.querySelectorAll('.cs-editable-desc');
+        textareas.forEach(ta => {
+            const el = ta as HTMLTextAreaElement;
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        });
+    }, []);
+
+    useEffect(() => {
+        // Small delay to ensure styles are applied and fonts are loaded
+        const timer = setTimeout(autoResizeAll, 50);
+        return () => clearTimeout(timer);
+    }, [autoResizeAll, localToken.stats.actions]);
+
 
 
     // Update handlers
