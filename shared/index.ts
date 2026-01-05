@@ -62,6 +62,7 @@ export type Token = {
     }[];
     visibility: TokenVisibility;
     stats: TokenStats;
+    currentHp?: number;
 };
 
 export type Campaign = {

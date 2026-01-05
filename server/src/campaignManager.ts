@@ -44,7 +44,10 @@ export class CampaignManager {
                 if (data.activeMapId !== undefined) campaign.activeMapId = data.activeMapId;
                 if (data.maps) campaign.maps.push(...(data.maps as MapData[]));
                 if (data.tokens) {
-                    const tokens = data.tokens as Token[];
+                    const tokens = (data.tokens as Token[]).map(t => ({
+                        ...t,
+                        currentHp: t.currentHp !== undefined ? t.currentHp : t.stats.hp
+                    }));
                     campaign.tokens.push(...tokens);
                     tokens.forEach(t => this.tokenSourceMap.set(t.id, file));
                 }

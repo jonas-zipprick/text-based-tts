@@ -48,6 +48,10 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
         });
     };
 
+    const curHp = token.currentHp ?? token.stats.hp;
+    const maxHp = token.stats.hp;
+    const showHp = curHp < maxHp;
+
     return (
         <Group
             x={x}
@@ -55,6 +59,38 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
             draggable
             onDragEnd={handleDragEnd}
         >
+            {showHp && (
+                <Group x={0} y={-10}>
+                    <Rect
+                        x={2}
+                        y={0}
+                        width={gridSize - 4}
+                        height={6}
+                        fill="#444"
+                        cornerRadius={2}
+                    />
+                    <Rect
+                        x={2}
+                        y={0}
+                        width={(gridSize - 4) * (curHp / maxHp)}
+                        height={6}
+                        fill="#2ecc71"
+                        cornerRadius={2}
+                    />
+                    <Text
+                        text={`${curHp}/${maxHp}`}
+                        x={0}
+                        y={-2}
+                        width={gridSize}
+                        align="center"
+                        fill="white"
+                        fontSize={8}
+                        shadowColor="black"
+                        shadowBlur={1}
+                        listening={false}
+                    />
+                </Group>
+            )}
             {image ? (
                 <KonvaImage
                     x={gridSize / 2 - radius}
