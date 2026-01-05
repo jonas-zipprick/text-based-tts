@@ -42,6 +42,9 @@ campaign/
 └── maps/                   # Map definition files
 ```
 
+> [!TIP]
+> Use the [campaign-schema.json](file:///home/jonas/projects/pnp-board/campaign-schema.json) for YAML validation and autocompletion in your IDE.
+
 ### Step 2: Create the Main Campaign File
 
 Create `campaign/campaign.yaml` with your campaign name and the starting map:
