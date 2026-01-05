@@ -35,6 +35,8 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
     const y = pos.y * gridSize;
     const radius = gridSize / 2 * 0.8;
 
+    const [isHovered, setIsHovered] = useState(false);
+
     const handleDragEnd = (e: any) => {
         const newX = Math.round(e.target.x() / gridSize);
         const newY = Math.round(e.target.y() / gridSize);
@@ -50,7 +52,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
 
     const curHp = token.currentHp ?? token.stats.hp;
     const maxHp = token.stats.hp;
-    const showHp = curHp < maxHp;
+    const showHp = (curHp < maxHp) || isHovered;
 
     return (
         <Group
@@ -58,6 +60,8 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token
             y={y}
             draggable
             onDragEnd={handleDragEnd}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             {showHp && (
                 <Group x={0} y={-10}>
