@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Token } from '../../../shared';
 import './CharacterSheet.css';
 
@@ -32,7 +32,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     // Local state for editing
     const [localToken, setLocalToken] = useState<Token>(token);
     const [hpInput, setHpInput] = useState('');
-    const overlayRef = useRef<HTMLDivElement>(null);
+
 
     // Debounced token for auto-save
     const debouncedToken = useDebounce(localToken, 300);
@@ -61,12 +61,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    // Handle click outside
-    const handleOverlayClick = (e: React.MouseEvent) => {
-        if (e.target === overlayRef.current) {
-            onClose();
-        }
-    };
+
 
     // Update handlers
     const updateField = useCallback((path: string, value: any) => {
@@ -123,7 +118,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     const description = [localToken.size, localToken.type, localToken.alignment].filter(Boolean).join(' ').toLowerCase() || localToken.description;
 
     return (
-        <div className="character-sheet-overlay" ref={overlayRef} onClick={handleOverlayClick}>
+        <div className="character-sheet-overlay">
             <div className="character-sheet">
                 <button className="character-sheet-close" onClick={onClose} title="Close">×</button>
                 <div className="character-sheet-content">
