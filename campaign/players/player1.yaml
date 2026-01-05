@@ -6,11 +6,11 @@ tokens:
       - sessionId: "239981"
     position:
       - map: 0
-        x: 10
-        y: 9
+        x: 6
+        y: 10
       - map: 1
-        x: 9
-        y: 20
+        x: 11
+        y: 14
     visibility:
       emit_light:
         enabled: true
