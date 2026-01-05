@@ -1,0 +1,373 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Campaign Schema",
+    "description": "Schema for pnp-board campaign files",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the campaign"
+        },
+        "activeMapId": {
+            "type": "integer",
+            "description": "The ID of the currently active map"
+        },
+        "maps": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/MapData"
+            }
+        },
+        "tokens": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/Token"
+            }
+        }
+    },
+    "definitions": {
+        "Point": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "x",
+                "y"
+            ]
+        },
+        "Wall": {
+            "type": "object",
+            "properties": {
+                "start": {
+                    "$ref": "#/definitions/Point"
+                },
+                "end": {
+                    "$ref": "#/definitions/Point"
+                }
+            },
+            "required": [
+                "start",
+                "end"
+            ]
+        },
+        "Light": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "radius": {
+                    "type": "number"
+                },
+                "color": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "x",
+                "y",
+                "radius",
+                "color"
+            ]
+        },
+        "MapData": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "grid": {
+                    "type": "object",
+                    "properties": {
+                        "width": {
+                            "type": "integer"
+                        },
+                        "height": {
+                            "type": "integer"
+                        },
+                        "cellSize": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "width",
+                        "height",
+                        "cellSize"
+                    ]
+                },
+                "background": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "picture": {
+                                "type": "string"
+                            },
+                            "size": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "picture",
+                            "size"
+                        ]
+                    }
+                },
+                "walls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Wall"
+                    }
+                },
+                "wallUnit": {
+                    "type": "string",
+                    "enum": [
+                        "cell",
+                        "pixel"
+                    ]
+                },
+                "lights": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Light"
+                    }
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "grid"
+            ]
+        },
+        "Token": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "picture": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "alignment": {
+                    "type": "string"
+                },
+                "controlled_by": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "sessionId": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "sessionId"
+                        ]
+                    }
+                },
+                "position": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "map": {
+                                "type": "integer"
+                            },
+                            "x": {
+                                "type": "number"
+                            },
+                            "y": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "map",
+                            "x",
+                            "y"
+                        ]
+                    }
+                },
+                "visibility": {
+                    "type": "object",
+                    "properties": {
+                        "night_vision": {
+                            "type": "boolean"
+                        },
+                        "view_distance": {
+                            "type": "number"
+                        },
+                        "emit_light": {
+                            "type": "object",
+                            "properties": {
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "radius": {
+                                    "type": "number"
+                                },
+                                "color": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "enabled",
+                                "radius",
+                                "color"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "night_vision"
+                    ]
+                },
+                "stats": {
+                    "type": "object",
+                    "properties": {
+                        "ac": {
+                            "type": "integer"
+                        },
+                        "acType": {
+                            "type": "string"
+                        },
+                        "hp": {
+                            "type": "integer"
+                        },
+                        "hpFormula": {
+                            "type": "string"
+                        },
+                        "speed": {
+                            "type": "integer"
+                        },
+                        "attributes": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        },
+                        "savingThrows": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        },
+                        "skills": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        },
+                        "damageResistances": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "damageImmunities": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "conditionImmunities": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "senses": {
+                            "type": "string"
+                        },
+                        "languages": {
+                            "type": "string"
+                        },
+                        "challenge": {
+                            "type": "number"
+                        },
+                        "xp": {
+                            "type": "integer"
+                        },
+                        "traits": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "description"
+                                ]
+                            }
+                        },
+                        "actions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "hit": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "ac",
+                        "hp",
+                        "speed",
+                        "attributes"
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "picture",
+                "controlled_by",
+                "visibility",
+                "stats"
+            ]
+        }
+    }
+}

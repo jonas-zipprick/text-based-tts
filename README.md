@@ -10,6 +10,7 @@ But this project is more reduced to the essentials and all the game definition i
 - Dynamic Ligting: Tokens are not visible on the screen unless one of the tokens you control can see them in the game (visibility radius and light source). Players can emit light
 - Fog of War: At the beginning, the entire map is engoulved in fog of war. Once tokens saw it, it becomes known terrain.
 - Only tokens that can be seen can be controlled
+- **Campaign Validation**: Includes a [YAML schema](file:///home/jonas/projects/pnp-board/campaign-schema.json) for autocompletion and error checking in your IDE.
 
 ## Non-Features
 - Voice chat
