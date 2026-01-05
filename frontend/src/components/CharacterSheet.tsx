@@ -88,11 +88,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             const parts = path.split('.');
             let obj: any = updated;
             for (let i = 0; i < parts.length - 1; i++) {
-                if (obj[parts[i]] === undefined) {
-                    obj[parts[i]] = {};
+                const part = parts[i];
+                if (obj[part] === undefined) {
+                    obj[part] = {};
                 }
-                obj[parts[i]] = { ...obj[parts[i]] };
-                obj = obj[parts[i]];
+                // Correctly clone array or object
+                obj[part] = Array.isArray(obj[part]) ? [...obj[part]] : { ...obj[part] };
+                obj = obj[part];
             }
             obj[parts[parts.length - 1]] = value;
             return updated;
@@ -131,9 +133,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     const currentHp = localToken.currentHp ?? localToken.stats.hp;
     const maxHp = localToken.stats.hp;
     const attrs = localToken.stats.attributes || {};
-
-    // Build description string
-    const description = [localToken.size, localToken.type, localToken.alignment].filter(Boolean).join(' ').toLowerCase() || localToken.description;
 
     const parseDice = (formula: string): { roll: number, text: string } | null => {
         // Extract inner formula if in parens e.g. "5 (1d8 + 1)" -> "1d8 + 1"
@@ -229,16 +228,34 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 style={{ fontSize: '28px', fontWeight: 'bold', fontVariant: 'small-caps' }}
                             />
                         </h1>
-                        <p className="cs-description">
+                        <div className="cs-type-line">
                             <input
                                 type="text"
-                                className="cs-editable cs-editable-wide"
-                                value={description || ''}
-                                onChange={e => updateField('description', e.target.value)}
-                                placeholder="Size type, alignment"
-                                style={{ fontStyle: 'italic' }}
+                                className="cs-editable cs-type-field"
+                                value={localToken.size || ''}
+                                onChange={e => updateField('size', e.target.value)}
+                                placeholder="Size"
                             />
-                        </p>
+                            <input
+                                type="text"
+                                className="cs-editable cs-type-field"
+                                value={localToken.type || ''}
+                                onChange={e => updateField('type', e.target.value)}
+                                placeholder="Type"
+                            />
+                            {localToken.alignment && (
+                                <>
+                                    <span>, </span>
+                                    <input
+                                        type="text"
+                                        className="cs-editable cs-type-field"
+                                        value={localToken.alignment}
+                                        onChange={e => updateField('alignment', e.target.value)}
+                                        placeholder="Alignment"
+                                    />
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     <div className="cs-divider" />
@@ -357,6 +374,32 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             </div>
                         )}
 
+                        {localToken.stats.damageVulnerabilities && localToken.stats.damageVulnerabilities.length > 0 && (
+                            <div className="cs-trait-line">
+                                <span className="cs-trait-label">Damage Vulnerabilities </span>
+                                <input
+                                    type="text"
+                                    className="cs-editable"
+                                    value={localToken.stats.damageVulnerabilities.join(', ')}
+                                    onChange={e => updateField('stats.damageVulnerabilities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    style={{ width: '250px' }}
+                                />
+                            </div>
+                        )}
+
+                        {localToken.stats.damageImmunities && localToken.stats.damageImmunities.length > 0 && (
+                            <div className="cs-trait-line">
+                                <span className="cs-trait-label">Damage Immunities </span>
+                                <input
+                                    type="text"
+                                    className="cs-editable"
+                                    value={localToken.stats.damageImmunities.join(', ')}
+                                    onChange={e => updateField('stats.damageImmunities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                                    style={{ width: '300px' }}
+                                />
+                            </div>
+                        )}
+
                         {localToken.stats.conditionImmunities && localToken.stats.conditionImmunities.length > 0 && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Condition Immunities </span>
@@ -367,6 +410,18 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                     onChange={e => updateField('stats.conditionImmunities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                                     style={{ width: '300px' }}
                                 />
+                            </div>
+                        )}
+
+                        {localToken.stats.skills && Object.keys(localToken.stats.skills).length > 0 && (
+                            <div className="cs-trait-line">
+                                <span className="cs-trait-label">Skills </span>
+                                {Object.entries(localToken.stats.skills).map(([key, val], i, arr) => (
+                                    <span key={key}>
+                                        {key.charAt(0).toUpperCase() + key.slice(1)} {val >= 0 ? '+' : ''}{val}
+                                        {i < arr.length - 1 ? ', ' : ''}
+                                    </span>
+                                ))}
                             </div>
                         )}
 
@@ -434,27 +489,116 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             {localToken.stats.actions.map((action, index) => {
                                 const isWeapon = action.modifiers?.attack !== undefined;
                                 return (
-                                    <div
-                                        className={`cs-action ${isWeapon ? 'cs-action-clickable' : ''}`}
-                                        key={index}
-                                        onClick={() => handleActionClick(action)}
-                                        title={isWeapon ? "Click to roll attack" : undefined}
-                                    >
-                                        <p className="cs-ability-desc">
-                                            <span className="cs-action-name">{action.name}. </span>
-                                            {action.description && <span>{action.description} </span>}
-                                            {action.modifiers?.attack !== undefined && (
-                                                <span className="cs-action-details">
-                                                    {action.range ? 'Ranged' : 'Melee'} Weapon Attack: +{action.modifiers.attack} to hit,
-                                                    {action.reach && ` Reach ${action.reach} ft.`}
-                                                    {action.range && ` Range ${action.range} ft.`}
-                                                    {action.targets && `, ${action.targets} target${action.targets > 1 ? 's' : ''}`}.
-                                                </span>
+                                    <div className="cs-action" key={index}>
+                                        <div className="cs-action-header">
+                                            <input
+                                                type="text"
+                                                className="cs-editable cs-action-name"
+                                                value={action.name}
+                                                onChange={e => updateField(`stats.actions.${index}.name`, e.target.value)}
+                                            />
+                                            {isWeapon && (
+                                                <button
+                                                    className="cs-roll-btn"
+                                                    onClick={() => handleActionClick(action)}
+                                                    title="Roll weapon attack"
+                                                >
+                                                    🎲 Roll
+                                                </button>
                                             )}
-                                            {action.hit && (
-                                                <span> Hit: {action.hit} {action.type} damage.</span>
+                                        </div>
+                                        <div className="cs-action-body">
+                                            <textarea
+                                                className="cs-editable-desc"
+                                                value={action.description || ''}
+                                                onChange={e => updateField(`stats.actions.${index}.description`, e.target.value)}
+                                                placeholder="Action description..."
+                                                rows={1}
+                                                onInput={(e: any) => {
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+                                            {isWeapon && (
+                                                <div className="cs-action-stats">
+                                                    <select
+                                                        className="cs-editable-select"
+                                                        value={action.range ? 'Ranged' : 'Melee'}
+                                                        onChange={e => {
+                                                            if (e.target.value === 'Ranged') {
+                                                                updateField(`stats.actions.${index}.range`, 30);
+                                                                updateField(`stats.actions.${index}.reach`, undefined);
+                                                            } else {
+                                                                updateField(`stats.actions.${index}.reach`, 5);
+                                                                updateField(`stats.actions.${index}.range`, undefined);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="Melee">Melee</option>
+                                                        <option value="Ranged">Ranged</option>
+                                                    </select>
+                                                    <span> Weapon Attack: +</span>
+                                                    <input
+                                                        type="number"
+                                                        className="cs-editable cs-editable-number"
+                                                        value={action.modifiers?.attack || 0}
+                                                        onChange={e => updateField(`stats.actions.${index}.modifiers.attack`, parseInt(e.target.value) || 0)}
+                                                    />
+                                                    <span> to hit, </span>
+                                                    {action.range ? (
+                                                        <>
+                                                            <span>Range </span>
+                                                            <input
+                                                                type="number"
+                                                                className="cs-editable cs-editable-number"
+                                                                value={action.range}
+                                                                onChange={e => updateField(`stats.actions.${index}.range`, parseInt(e.target.value) || 0)}
+                                                            />
+                                                            <span> ft.</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span>Reach </span>
+                                                            <input
+                                                                type="number"
+                                                                className="cs-editable cs-editable-number"
+                                                                value={action.reach || 5}
+                                                                onChange={e => updateField(`stats.actions.${index}.reach`, parseInt(e.target.value) || 0)}
+                                                            />
+                                                            <span> ft.</span>
+                                                        </>
+                                                    )}
+                                                    <span>, </span>
+                                                    <input
+                                                        type="number"
+                                                        className="cs-editable cs-editable-number"
+                                                        value={action.targets || 1}
+                                                        onChange={e => updateField(`stats.actions.${index}.targets`, parseInt(e.target.value) || 1)}
+                                                    />
+                                                    <span> target(s).</span>
+                                                </div>
                                             )}
-                                        </p>
+                                            <div className="cs-action-hit-row">
+                                                <span>Hit: </span>
+                                                <input
+                                                    type="text"
+                                                    className="cs-editable"
+                                                    value={action.hit || ''}
+                                                    onChange={e => updateField(`stats.actions.${index}.hit`, e.target.value)}
+                                                    placeholder="dice (e.g. 1d8+2)"
+                                                    style={{ width: '100px' }}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    className="cs-editable"
+                                                    value={action.type || ''}
+                                                    onChange={e => updateField(`stats.actions.${index}.type`, e.target.value)}
+                                                    placeholder="type"
+                                                    style={{ width: '80px', fontStyle: 'italic' }}
+                                                />
+                                                <span> damage.</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -467,10 +611,25 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <h2 className="cs-section-title">Legendary Actions</h2>
                             {localToken.stats.legendaryActions.map((action, index) => (
                                 <div className="cs-ability" key={index}>
-                                    <p className="cs-ability-desc">
-                                        <span className="cs-ability-name">{action.name}. </span>
-                                        {action.description}
-                                    </p>
+                                    <div className="cs-ability-header">
+                                        <input
+                                            type="text"
+                                            className="cs-editable cs-action-name"
+                                            value={action.name}
+                                            onChange={e => updateField(`stats.legendaryActions.${index}.name`, e.target.value)}
+                                        />
+                                    </div>
+                                    <textarea
+                                        className="cs-editable-desc"
+                                        value={action.description || ''}
+                                        onChange={e => updateField(`stats.legendaryActions.${index}.description`, e.target.value)}
+                                        placeholder="Action description..."
+                                        rows={1}
+                                        onInput={(e: any) => {
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = e.target.scrollHeight + 'px';
+                                        }}
+                                    />
                                 </div>
                             ))}
                         </>

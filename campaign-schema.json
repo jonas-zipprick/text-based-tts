@@ -286,6 +286,12 @@
                                 "type": "string"
                             }
                         },
+                        "damageVulnerabilities": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
                         "damageImmunities": {
                             "type": "array",
                             "items": {

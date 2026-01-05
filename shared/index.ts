@@ -60,6 +60,7 @@ export type TokenStats = {
     savingThrows?: Record<string, number>;
     skills?: Record<string, number>;
     damageResistances?: string[];
+    damageVulnerabilities?: string[];
     damageImmunities?: string[];
     conditionImmunities?: string[];
     senses?: string;
