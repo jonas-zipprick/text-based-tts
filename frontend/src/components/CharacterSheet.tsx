@@ -131,6 +131,35 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     // Build description string
     const description = [localToken.size, localToken.type, localToken.alignment].filter(Boolean).join(' ').toLowerCase() || localToken.description;
 
+    // Toast state
+    const [toast, setToast] = useState<{ visible: boolean; header: string; message: string; type: 'normal' | 'crit' | 'fail' }>({
+        visible: false,
+        header: '',
+        message: '',
+        type: 'normal'
+    });
+
+    const showToast = (header: string, message: string, type: 'normal' | 'crit' | 'fail' = 'normal') => {
+        setToast({ visible: true, header, message, type });
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+    };
+
+    const handleActionClick = (action: any) => { // Using any for TokenAction temporarily to avoid import loops if needed, but safe here
+        if (action.modifiers?.attack !== undefined) {
+            const roll = Math.floor(Math.random() * 20) + 1;
+            const total = roll + action.modifiers.attack;
+            let type: 'normal' | 'crit' | 'fail' = 'normal';
+
+            if (roll === 20) type = 'crit';
+            if (roll === 1) type = 'fail';
+
+            const sign = action.modifiers.attack >= 0 ? '+' : '';
+            const msg = `Roll: ${roll} ${sign}${action.modifiers.attack} = ${total}`;
+
+            showToast(`${action.name} Attack`, msg, type);
+        }
+    };
+
     return (
         <div className="character-sheet-overlay">
             <div className="character-sheet">
@@ -349,25 +378,33 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     {localToken.stats.actions && localToken.stats.actions.length > 0 && (
                         <>
                             <h2 className="cs-section-title">Actions</h2>
-                            {localToken.stats.actions.map((action, index) => (
-                                <div className="cs-action" key={index}>
-                                    <p className="cs-ability-desc">
-                                        <span className="cs-action-name">{action.name}. </span>
-                                        {action.description && <span>{action.description} </span>}
-                                        {action.modifiers?.attack !== undefined && (
-                                            <span className="cs-action-details">
-                                                {action.range ? 'Ranged' : 'Melee'} Weapon Attack: +{action.modifiers.attack} to hit,
-                                                {action.reach && ` Reach ${action.reach} ft.`}
-                                                {action.range && ` Range ${action.range} ft.`}
-                                                {action.targets && `, ${action.targets} target${action.targets > 1 ? 's' : ''}`}.
-                                            </span>
-                                        )}
-                                        {action.hit && (
-                                            <span> Hit: {action.hit} {action.type} damage.</span>
-                                        )}
-                                    </p>
-                                </div>
-                            ))}
+                            {localToken.stats.actions.map((action, index) => {
+                                const isWeapon = action.modifiers?.attack !== undefined;
+                                return (
+                                    <div
+                                        className={`cs-action ${isWeapon ? 'cs-action-clickable' : ''}`}
+                                        key={index}
+                                        onClick={() => handleActionClick(action)}
+                                        title={isWeapon ? "Click to roll attack" : undefined}
+                                    >
+                                        <p className="cs-ability-desc">
+                                            <span className="cs-action-name">{action.name}. </span>
+                                            {action.description && <span>{action.description} </span>}
+                                            {action.modifiers?.attack !== undefined && (
+                                                <span className="cs-action-details">
+                                                    {action.range ? 'Ranged' : 'Melee'} Weapon Attack: +{action.modifiers.attack} to hit,
+                                                    {action.reach && ` Reach ${action.reach} ft.`}
+                                                    {action.range && ` Range ${action.range} ft.`}
+                                                    {action.targets && `, ${action.targets} target${action.targets > 1 ? 's' : ''}`}.
+                                                </span>
+                                            )}
+                                            {action.hit && (
+                                                <span> Hit: {action.hit} {action.type} damage.</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                );
+                            })}
                         </>
                     )}
 
@@ -385,6 +422,12 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             ))}
                         </>
                     )}
+                </div>
+
+                {/* Toast Notification */}
+                <div className={`cs-toast ${toast.visible ? 'visible' : ''} ${toast.type}`}>
+                    <div className="cs-toast-header">{toast.header}</div>
+                    <div className="cs-toast-result">{toast.message}</div>
                 </div>
             </div>
         </div>

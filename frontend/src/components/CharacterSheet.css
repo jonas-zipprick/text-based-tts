@@ -293,3 +293,73 @@
     outline: 2px solid #58180d;
     border-color: #58180d;
 }
+
+/* Clickable Action */
+.cs-action-clickable {
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    border-radius: 4px;
+    padding: 4px;
+    margin: -4px;
+    /* Offset padding */
+    margin-bottom: 8px;
+}
+
+.cs-action-clickable:hover {
+    background-color: rgba(88, 24, 13, 0.1);
+}
+
+.cs-action-clickable:active {
+    transform: scale(0.99);
+    background-color: rgba(88, 24, 13, 0.2);
+}
+
+/* Toast Notification */
+.cs-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+    transform: none;
+    background-color: #58180d;
+    color: #fdf1dc;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    font-family: 'Libre Baskerville', serif;
+    font-size: 16px;
+    text-align: center;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.cs-toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.cs-toast-header {
+    font-size: 12px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.cs-toast-result {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.cs-toast.crit {
+    background-color: #1a6b1a;
+    /* Greenish */
+    border: 2px solid #ffd700;
+}
+
+.cs-toast.fail {
+    background-color: #8b0000;
+    /* Red */
+    border: 2px solid #000;
+}

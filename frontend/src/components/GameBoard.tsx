@@ -440,7 +440,7 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                 <div style={{
                     position: 'absolute',
                     bottom: '10px',
-                    right: '10px',
+                    left: '10px',
                     backgroundColor: 'rgba(0, 0, 0, 0.6)',
                     color: 'white',
                     padding: '4px 8px',
