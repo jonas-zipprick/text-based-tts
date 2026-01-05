@@ -69,6 +69,29 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('user disconnected', socket.id);
     });
+
+    socket.on('change-map', (data: { newMapId: number }) => {
+        const campaign = campaignManager.getCampaign();
+        if (campaign) {
+            // Move all player-controlled tokens to the new map
+            campaign.tokens.forEach(token => {
+                if (token.controlled_by && token.controlled_by.length > 0) {
+                    // Find existing position on new map or create one
+                    if (!token.position) token.position = [];
+                    const existingPos = token.position.find(p => p.map === data.newMapId);
+                    if (!existingPos) {
+                        // Add a default position on the new map (center-ish)
+                        token.position.push({ map: data.newMapId, x: 10, y: 10 });
+                    }
+                    // Persist the position update
+                    const pos = token.position.find(p => p.map === data.newMapId)!;
+                    campaignManager.updateTokenPosition(token.id, data.newMapId, pos.x, pos.y);
+                }
+            });
+            // Broadcast the updated campaign
+            io.emit('campaign-update', campaign);
+        }
+    });
 });
 
 const PORT = 3000;

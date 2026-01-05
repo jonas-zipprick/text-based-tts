@@ -7,6 +7,7 @@ function App() {
   const [isGM, setIsGM] = useState(false);
   const [isDaytime, setIsDaytime] = useState(true);
   const [sessionId, setSessionId] = useState("239981"); // Default to player 1
+  const [activeMapId, setActiveMapId] = useState<number>(0);
   const [stageScale, setStageScale] = useState<number>(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
@@ -20,9 +21,25 @@ function App() {
     }
   };
 
+  const handleMapChange = (newMapId: number) => {
+    if (socket && newMapId !== activeMapId) {
+      socket.emit('change-map', { newMapId });
+      setActiveMapId(newMapId);
+    }
+  };
+
   return (
     <div className="w-screen h-screen bg-black flex flex-col">
       <div className="absolute top-0 right-0 z-50 p-2 bg-gray-800 text-white rounded flex gap-4">
+        <select
+          value={activeMapId}
+          onChange={e => handleMapChange(Number(e.target.value))}
+          className="text-black bg-white px-1 mr-2"
+        >
+          {campaign.maps.map(m => (
+            <option key={m.id} value={m.id}>{m.name}</option>
+          ))}
+        </select>
         <label>
           <input type="checkbox" checked={isGM} onChange={e => setIsGM(e.target.checked)} />
           GM Mode
@@ -47,6 +64,7 @@ function App() {
         isGM={isGM}
         isDaytime={isDaytime}
         sessionId={sessionId}
+        activeMapId={activeMapId}
         stageScale={stageScale}
         setStageScale={setStageScale}
         stagePos={stagePos}

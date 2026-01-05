@@ -10,6 +10,7 @@ interface GameBoardProps {
     isGM: boolean;
     isDaytime: boolean;
     sessionId: string;
+    activeMapId: number;
     stageScale: number;
     setStageScale: (scale: number) => void;
     stagePos: { x: number, y: number };
@@ -92,12 +93,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     isGM,
     isDaytime,
     sessionId,
+    activeMapId,
     stageScale,
     setStageScale,
     stagePos,
     setStagePos
 }) => {
-    const activeMap = campaign.maps[0];
+    const activeMap = campaign.maps.find(m => m.id === activeMapId) || campaign.maps[0];
 
     if (!activeMap) {
         console.log("GameBoard: No active map found during render", campaign);
