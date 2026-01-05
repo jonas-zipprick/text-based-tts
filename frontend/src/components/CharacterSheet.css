@@ -346,6 +346,30 @@
     margin: 0;
 }
 
+.cs-prof-label {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    background: rgba(88, 24, 13, 0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    margin-left: 2px;
+}
+
+.cs-prof-label input {
+    margin: 0;
+    cursor: pointer;
+}
+
+.cs-total-bonus {
+    font-weight: bold;
+    color: #58180d;
+    margin-left: 4px;
+}
+
 /* Editable Fields */
 .cs-editable {
     background: transparent;

@@ -38,6 +38,8 @@ export type TokenAction = {
     modifiers?: {
         attack?: number;
     };
+    ability?: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+    proficient?: boolean;
     reach?: number;
     range?: number;
     targets?: number;
@@ -127,6 +129,7 @@ export type RollEvent = {
         mod: number;
         sign: string;
         type: 'normal' | 'crit' | 'fail';
+        breakdown?: string;
     };
     damage?: {
         total: number;

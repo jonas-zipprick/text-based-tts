@@ -241,7 +241,7 @@ export class CampaignManager {
             awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 }
         });
 
-        this.watcher.on('all', (event, path) => {
+        this.watcher.on('all', (event: string, path: string) => {
             if (path.endsWith('.yaml') || path.endsWith('.yml')) {
                 const newCampaign = this.loadCampaign();
                 if (JSON.stringify(this.currentCampaign) !== JSON.stringify(newCampaign)) {

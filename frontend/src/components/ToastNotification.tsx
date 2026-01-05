@@ -28,7 +28,7 @@ export const ToastNotification: React.FC<{ data: RollEvent; t: any }> = ({ data,
             <div className="cs-toast-row">
                 Attack: <strong>{data.attack.total}</strong>
                 <span className="cs-toast-detail">
-                    ({data.attack.d20}{data.attack.sign}{data.attack.mod})
+                    ({data.attack.breakdown || `${data.attack.d20}${data.attack.sign}${data.attack.mod}`})
                 </span>
             </div>
             {data.damage && data.damage.map((dmg, idx) => (

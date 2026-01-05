@@ -371,6 +371,20 @@
                                             }
                                         }
                                     },
+                                    "ability": {
+                                        "type": "string",
+                                        "enum": [
+                                            "str",
+                                            "dex",
+                                            "con",
+                                            "int",
+                                            "wis",
+                                            "cha"
+                                        ]
+                                    },
+                                    "proficient": {
+                                        "type": "boolean"
+                                    },
                                     "extraDamage": {
                                         "type": "array",
                                         "items": {

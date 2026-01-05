@@ -13,9 +13,24 @@ interface CharacterSheetProps {
 
 
 // Calculate attribute modifier
-const getModifier = (value: number): string => {
+const getModifierText = (value: number): string => {
     const mod = Math.floor((value - 10) / 2);
     return mod >= 0 ? `+${mod}` : `${mod}`;
+};
+
+const getModifier = (value: number): number => {
+    return Math.floor((value - 10) / 2);
+};
+
+const getProficiencyBonus = (challenge: number): number => {
+    if (challenge < 5) return 2;
+    if (challenge < 9) return 3;
+    if (challenge < 13) return 4;
+    if (challenge < 17) return 5;
+    if (challenge < 21) return 6;
+    if (challenge < 25) return 7;
+    if (challenge < 29) return 8;
+    return 9;
 };
 
 // Debounce hook
@@ -230,11 +245,37 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     };
 
     const handleActionClick = (action: any) => {
-        if (action.modifiers?.attack !== undefined) {
+        if (action.modifiers?.attack !== undefined || action.ability !== undefined) {
             // Attack Roll
             const d20 = Math.floor(Math.random() * 20) + 1;
-            const attackMod = action.modifiers?.attack ?? 0;
+
+            let attackMod = 0;
+            let breakdownParts: string[] = [];
+
+            if (action.ability) {
+                const attrMod = getModifier(attrs[action.ability] || 10);
+                attackMod += attrMod;
+                breakdownParts.push(`${attrMod >= 0 ? '+' : ''}${attrMod} [${action.ability.toUpperCase()}]`);
+
+                if (action.proficient) {
+                    const pb = getProficiencyBonus(localToken.stats.challenge || 0);
+                    attackMod += pb;
+                    breakdownParts.push(`+${pb} [PROF]`);
+                }
+
+                const bonus = action.modifiers?.attack || 0;
+                if (bonus !== 0) {
+                    attackMod += bonus;
+                    breakdownParts.push(`${bonus >= 0 ? '+' : ''}${bonus} [BONUS]`);
+                }
+            } else {
+                // Legacy / Static mode
+                attackMod = action.modifiers?.attack ?? 0;
+                breakdownParts.push(`${attackMod >= 0 ? '+' : ''}${attackMod}`);
+            }
+
             const attackTotal = d20 + attackMod;
+            const breakdown = `${d20} ${breakdownParts.join(' ')}`;
 
             // Initial roll results
             let damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
@@ -275,7 +316,8 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     d20,
                     mod: attackMod,
                     sign: attackMod >= 0 ? '+' : '',
-                    type: d20 === 20 ? 'crit' : (d20 === 1 ? 'fail' : 'normal')
+                    type: d20 === 20 ? 'crit' : (d20 === 1 ? 'fail' : 'normal'),
+                    breakdown
                 },
                 damage: damageResults.length > 0 ? damageResults : undefined
             };
@@ -414,7 +456,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                         updateField('stats.attributes', newAttrs);
                                     }}
                                 />
-                                <div className="cs-attr-modifier">({getModifier(attrs[attr] || 10)})</div>
+                                <div className="cs-attr-modifier">({getModifierText(attrs[attr] || 10)})</div>
                             </div>
                         ))}
                     </div>
@@ -549,7 +591,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         <>
                             <h2 className="cs-section-title">Actions</h2>
                             {localToken.stats.actions.map((action, index) => {
-                                const isWeapon = action.modifiers?.attack !== undefined;
+                                const isWeapon = action.modifiers?.attack !== undefined || action.ability !== undefined;
                                 return (
                                     <div className="cs-action" key={index}>
                                         <div className="cs-action-header">
@@ -559,7 +601,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 value={action.name}
                                                 onChange={e => updateField(`stats.actions.${index}.name`, e.target.value)}
                                             />
-                                            {isWeapon && (
+                                            {(isWeapon || action.hit || action.extraDamage) && (
                                                 <button
                                                     className="cs-roll-btn"
                                                     onClick={() => handleActionClick(action)}
@@ -583,6 +625,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             />
                                             {isWeapon && (
                                                 <div className="cs-action-stats">
+                                                    <span>Weapon Attack: </span>
                                                     <select
                                                         className="cs-editable-select"
                                                         value={action.range ? 'Ranged' : 'Melee'}
@@ -599,13 +642,49 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                         <option value="Melee">Melee</option>
                                                         <option value="Ranged">Ranged</option>
                                                     </select>
-                                                    <span> Weapon Attack: +</span>
+                                                    <select
+                                                        className="cs-editable-select"
+                                                        value={action.ability || ''}
+                                                        onChange={e => updateField(`stats.actions.${index}.ability`, e.target.value || undefined)}
+                                                    >
+                                                        <option value="">(None)</option>
+                                                        <option value="str">STR</option>
+                                                        <option value="dex">DEX</option>
+                                                        <option value="con">CON</option>
+                                                        <option value="int">INT</option>
+                                                        <option value="wis">WIS</option>
+                                                        <option value="cha">CHA</option>
+                                                    </select>
+
+                                                    {action.ability && (
+                                                        <label className="cs-prof-label">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={action.proficient || false}
+                                                                onChange={e => updateField(`stats.actions.${index}.proficient`, e.target.checked)}
+                                                            />
+                                                            Prof
+                                                        </label>
+                                                    )}
+
+                                                    <span> +</span>
                                                     <input
                                                         type="number"
                                                         className="cs-editable cs-editable-number"
                                                         value={action.modifiers?.attack || 0}
                                                         onChange={e => updateField(`stats.actions.${index}.modifiers.attack`, parseInt(e.target.value) || 0)}
+                                                        style={{ width: '30px' }}
                                                     />
+
+                                                    {action.ability && (
+                                                        <span className="cs-total-bonus">
+                                                            (Total: +{
+                                                                getModifier(attrs[action.ability] || 10) +
+                                                                (action.proficient ? getProficiencyBonus(localToken.stats.challenge || 0) : 0) +
+                                                                (action.modifiers?.attack || 0)
+                                                            })
+                                                        </span>
+                                                    )}
                                                     <span> to hit, </span>
                                                     {action.range ? (
                                                         <>
@@ -688,7 +767,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         <>
                             <h2 className="cs-section-title">Legendary Actions</h2>
                             {localToken.stats.legendaryActions.map((action, index) => {
-                                const isRollable = action.modifiers?.attack !== undefined || action.hit !== undefined;
+                                const isRollable = action.modifiers?.attack !== undefined || action.ability !== undefined || action.hit !== undefined;
                                 return (
                                     <div className="cs-action" key={index}>
                                         <div className="cs-action-header">
@@ -720,6 +799,55 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     e.target.style.height = e.target.scrollHeight + 'px';
                                                 }}
                                             />
+                                            {(action.modifiers?.attack !== undefined || action.ability !== undefined) && (
+                                                <div className="cs-action-stats">
+                                                    <span>Weapon Attack: </span>
+                                                    <select
+                                                        className="cs-editable-select"
+                                                        value={action.ability || ''}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.ability`, e.target.value || undefined)}
+                                                    >
+                                                        <option value="">(None)</option>
+                                                        <option value="str">STR</option>
+                                                        <option value="dex">DEX</option>
+                                                        <option value="con">CON</option>
+                                                        <option value="int">INT</option>
+                                                        <option value="wis">WIS</option>
+                                                        <option value="cha">CHA</option>
+                                                    </select>
+
+                                                    {action.ability && (
+                                                        <label className="cs-prof-label">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={action.proficient || false}
+                                                                onChange={e => updateField(`stats.legendaryActions.${index}.proficient`, e.target.checked)}
+                                                            />
+                                                            Prof
+                                                        </label>
+                                                    )}
+
+                                                    <span> +</span>
+                                                    <input
+                                                        type="number"
+                                                        className="cs-editable cs-editable-number"
+                                                        value={action.modifiers?.attack || 0}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.modifiers.attack`, parseInt(e.target.value) || 0)}
+                                                        style={{ width: '30px' }}
+                                                    />
+
+                                                    {action.ability && (
+                                                        <span className="cs-total-bonus">
+                                                            (Total: +{
+                                                                getModifier(attrs[action.ability] || 10) +
+                                                                (action.proficient ? getProficiencyBonus(localToken.stats.challenge || 0) : 0) +
+                                                                (action.modifiers?.attack || 0)
+                                                            })
+                                                        </span>
+                                                    )}
+                                                    <span> to hit, </span>
+                                                </div>
+                                            )}
                                             {(action.hit || action.extraDamage) && (
                                                 <div className="cs-action-hit-row">
                                                     <span>Hit: </span>
