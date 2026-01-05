@@ -1,9 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
-import { parseDocument, YAMLMap, YAMLSeq } from 'yaml';
-import { Campaign, MapData, Token } from '../../shared';
-
+import { parseDocument, YAMLMap, YAMLSeq, isCollection } from 'yaml';
+import { Campaign, Token, Wall, Light, MapData } from '../../shared';
 import chokidar from 'chokidar';
 
 export class CampaignManager {
@@ -14,15 +13,11 @@ export class CampaignManager {
     private mapSourceMap: Map<number, string> = new Map();
     private lastWrittenVersion: number = 0;
 
-
     constructor(campaignDir: string) {
         this.campaignDir = campaignDir;
     }
 
-
-
     public loadCampaign(): Campaign {
-        // Preserve version from current campaign or use lastWrittenVersion
         const preservedVersion = this.currentCampaign?.version ?? this.lastWrittenVersion;
 
         const campaign: Campaign = {
@@ -44,12 +39,6 @@ export class CampaignManager {
 
                 if (!data) continue;
 
-                if (data.name && !campaign.name) {
-                    // Basic heuristic: if it has a name and we haven't set it (or it's the main file), use it.
-                    // Ideally we should look for specific campaign.yaml structure but merging is the goal.
-                }
-
-                // Merge properties
                 if (data.name) campaign.name = data.name;
                 if (data.activeMapId !== undefined) campaign.activeMapId = data.activeMapId;
                 if (data.maps) {
@@ -71,21 +60,9 @@ export class CampaignManager {
             }
         }
 
-        // Safety check: If we lost all maps but had them before, something probably went wrong with reading.
-        // This prevents the UI from unmounting the GameBoard during a blip.
         if (campaign.maps.length === 0 && this.currentCampaign && this.currentCampaign.maps.length > 0) {
-            console.warn("loadCampaign loaded 0 maps. Conserving previous maps to prevent UI flicker.");
             campaign.maps = this.currentCampaign.maps;
-            // We might also want to conserve tokens if they rely on maps, but tokens are usually the ones being updated.
-            // But if maps are gone, tokens position references might be invalid anyway.
-            // Let's stick to just maps for now.
         }
-
-        if (campaign.maps.length === 0) {
-            console.warn("loadCampaign: Returning 0 maps!", { previousMaps: this.currentCampaign?.maps?.length });
-        }
-
-        // console.log(`Loaded campaign "${campaign.name}" with ${campaign.maps.length} maps and ${campaign.tokens.length} tokens.`);
 
         if (!this.currentCampaign) {
             this.currentCampaign = campaign;
@@ -99,52 +76,36 @@ export class CampaignManager {
 
     public setActiveMapId(mapId: number) {
         const filePath = path.join(this.campaignDir, 'campaign.yaml');
-        if (!fs.existsSync(filePath)) {
-            console.error(`campaign.yaml not found at ${filePath}`);
-            return;
-        }
+        if (!fs.existsSync(filePath)) return;
 
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             const doc = parseDocument(content);
-
             doc.set('activeMapId', mapId);
-
             fs.writeFileSync(filePath, doc.toString());
-            console.log(`Updated activeMapId to ${mapId} in ${filePath}`);
         } catch (e) {
-            console.error(`Error updating activeMapId in ${filePath}:`, e);
+            console.error(`Error updating activeMapId:`, e);
         }
     }
 
     public updateTokenPosition(tokenId: number, mapId: number, x: number, y: number) {
         const filePath = this.tokenSourceMap.get(tokenId);
-        if (!filePath) {
-            console.error(`Source file for token ${tokenId} not found.`);
-            return;
-        }
+        if (!filePath) return;
 
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             const doc = parseDocument(content);
-
             const tokens = doc.get('tokens') as YAMLSeq;
             if (!tokens) return;
 
             const tokenItem = tokens.items.find((item: any) => {
-                // Handle direct mapping or YAMLNode
                 const id = item.get ? item.get('id') : item.id;
                 return id === tokenId;
             }) as YAMLMap;
 
             if (tokenItem) {
                 let positionSeq = tokenItem.get('position') as YAMLSeq;
-
-                // If position doesn't exist, create it (not implementing full creation here for brevity, assuming exists as per realistic example)
-                if (!positionSeq) {
-                    // Creating complex structures with 'yaml' requires more setup, assuming existence for now
-                    return;
-                }
+                if (!positionSeq) return;
 
                 const mapPos = positionSeq.items.find((item: any) => {
                     const m = item.get ? item.get('map') : item.map;
@@ -155,30 +116,22 @@ export class CampaignManager {
                     mapPos.set('x', x);
                     mapPos.set('y', y);
                 } else {
-                    // Add new position entry
                     positionSeq.add({ map: mapId, x, y });
                 }
-
                 fs.writeFileSync(filePath, doc.toString());
-                console.log(`Updated token ${tokenId} position in ${filePath}`);
             }
-
         } catch (e) {
-            console.error(`Error updating token position in ${filePath}:`, e);
+            console.error(`Error updating token position:`, e);
         }
     }
 
     public updateTokenStats(tokenId: number, updates: Record<string, any>) {
         const filePath = this.tokenSourceMap.get(tokenId);
-        if (!filePath) {
-            console.error(`Source file for token ${tokenId} not found.`);
-            return;
-        }
+        if (!filePath) return;
 
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             const doc = parseDocument(content);
-
             const tokens = doc.get('tokens') as YAMLSeq;
             if (!tokens) return;
 
@@ -188,34 +141,9 @@ export class CampaignManager {
             }) as YAMLMap;
 
             if (tokenItem) {
-                // Helper to set nested values
-                const setNestedValue = (obj: YAMLMap, path: string[], value: any) => {
-                    if (path.length === 1) {
-                        obj.set(path[0], value);
-                        return;
-                    }
-
-                    let current = obj.get(path[0]) as YAMLMap;
-                    if (!current) {
-                        // Create the nested object if it doesn't exist
-                        obj.set(path[0], {});
-                        current = obj.get(path[0]) as YAMLMap;
-                    }
-
-                    // For stats and other nested objects
-                    if (path.length === 2) {
-                        if (current.set) {
-                            current.set(path[1], value);
-                        }
-                    }
-                };
-
-                // Apply updates
                 for (const [key, value] of Object.entries(updates)) {
-                    if (key === 'id') continue; // Don't update ID
-
+                    if (key === 'id') continue;
                     if (key === 'stats' && typeof value === 'object') {
-                        // Handle stats object specially
                         const statsNode = tokenItem.get('stats') as YAMLMap;
                         if (statsNode && statsNode.set) {
                             for (const [statKey, statValue] of Object.entries(value)) {
@@ -226,138 +154,81 @@ export class CampaignManager {
                         tokenItem.set(key, value);
                     }
                 }
-
                 fs.writeFileSync(filePath, doc.toString());
-                console.log(`Updated token ${tokenId} stats in ${filePath}`);
             }
-
         } catch (e) {
-            console.error(`Error updating token stats in ${filePath}:`, e);
+            console.error(`Error updating token stats:`, e);
         }
     }
 
     public watch(callback: (campaign: Campaign) => void) {
-        if (this.watcher) {
-            this.watcher.close();
-        }
+        if (this.watcher) this.watcher.close();
 
         this.watcher = chokidar.watch(this.campaignDir, {
-            ignored: /(^|[\/\\])\../, // ignore dotfiles
+            ignored: /(^|[\/\\])\../,
             persistent: true,
             ignoreInitial: true,
-            awaitWriteFinish: { // Wait for writes to finish to avoid partial reads/loops
-                stabilityThreshold: 200,
-                pollInterval: 100
-            }
+            awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 }
         });
 
         this.watcher.on('all', (event, path) => {
             if (path.endsWith('.yaml') || path.endsWith('.yml')) {
-                console.log(`File ${path} changed (${event}), reloading campaign...`);
-
                 const newCampaign = this.loadCampaign();
-
-                // Deep comparison to avoid redundant updates (glitch fix)
-                // We strip the version field for comparison if we decide to persist it later, 
-                // but for now relying on strict JSON equality of the content.
-                // Note: We need to ensure we don't compare the version field if it's just a counter we manage.
-
-                const currentJson = JSON.stringify(this.currentCampaign);
-                const newJson = JSON.stringify(newCampaign);
-
-                if (currentJson !== newJson) {
-                    console.log('Campaign changed externally, broadcasting update.');
+                if (JSON.stringify(this.currentCampaign) !== JSON.stringify(newCampaign)) {
                     this.currentCampaign = newCampaign;
                     callback(newCampaign);
-                } else {
-                    console.log('Campaign file changed but content matches in-memory state (likely internal write). suppressing update.');
                 }
             }
         });
     }
 
-    public addWalls(mapId: number, newWalls: any[]) {
+    public addWalls(mapId: number, newWalls: Wall[]) {
         const filePath = this.mapSourceMap.get(mapId);
-        if (!filePath) {
-            console.error(`Source file for map ${mapId} not found. Available maps:`, Array.from(this.mapSourceMap.keys()));
-            return;
-        }
+        if (!filePath) return;
 
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             const doc = parseDocument(content);
-
             const maps = doc.get('maps') as YAMLSeq;
-            if (!maps) {
-                console.error(`No maps section in ${filePath}`);
-                return;
-            }
+            if (!maps) return;
 
-            const mapItem = maps.items.find((item: any) => {
-                const id = item.get ? item.get('id') : item.id;
-                return id === mapId;
-            }) as YAMLMap;
-
+            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
             if (mapItem) {
-                if (!mapItem.has('walls')) {
-                    mapItem.set('walls', new YAMLSeq());
-                }
+                if (!mapItem.has('walls')) mapItem.set('walls', new YAMLSeq());
                 const wallsSeq = mapItem.get('walls') as YAMLSeq;
-
                 newWalls.forEach(w => {
                     const wallMap = new YAMLMap();
                     const startMap = new YAMLMap();
-                    startMap.set('x', w.start.x);
-                    startMap.set('y', w.start.y);
-
+                    startMap.set('x', Math.round(w.start.x));
+                    startMap.set('y', Math.round(w.start.y));
                     const endMap = new YAMLMap();
-                    endMap.set('x', w.end.x);
-                    endMap.set('y', w.end.y);
-
+                    endMap.set('x', Math.round(w.end.x));
+                    endMap.set('y', Math.round(w.end.y));
                     wallMap.set('start', startMap);
                     wallMap.set('end', endMap);
                     wallsSeq.add(wallMap);
                 });
-
                 fs.writeFileSync(filePath, doc.toString());
-                console.log(`Added ${newWalls.length} walls to map ${mapId} in ${filePath}`);
-            } else {
-                console.error(`Map ${mapId} not found in ${filePath}`);
             }
-
         } catch (e) {
-            console.error(`Error adding walls in ${filePath}:`, e);
+            console.error(`Error adding walls:`, e);
         }
     }
 
-    public addLights(mapId: number, newLights: any[]) {
+    public addLights(mapId: number, newLights: Light[]) {
         const filePath = this.mapSourceMap.get(mapId);
-        if (!filePath) {
-            console.error(`Source file for map ${mapId} not found. Available maps:`, Array.from(this.mapSourceMap.keys()));
-            return;
-        }
+        if (!filePath) return;
 
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             const doc = parseDocument(content);
-
             const maps = doc.get('maps') as YAMLSeq;
-            if (!maps) {
-                console.error(`No maps section in ${filePath}`);
-                return;
-            }
+            if (!maps) return;
 
-            const mapItem = maps.items.find((item: any) => {
-                const id = item.get ? item.get('id') : item.id;
-                return id === mapId;
-            }) as YAMLMap;
-
+            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
             if (mapItem) {
-                if (!mapItem.has('lights')) {
-                    mapItem.set('lights', new YAMLSeq());
-                }
+                if (!mapItem.has('lights')) mapItem.set('lights', new YAMLSeq());
                 const lightsSeq = mapItem.get('lights') as YAMLSeq;
-
                 newLights.forEach(l => {
                     const lightMap = new YAMLMap();
                     lightMap.set('x', l.x);
@@ -366,34 +237,87 @@ export class CampaignManager {
                     lightMap.set('color', l.color);
                     lightsSeq.add(lightMap);
                 });
-
                 fs.writeFileSync(filePath, doc.toString());
-                console.log(`Added ${newLights.length} lights to map ${mapId} in ${filePath}`);
-            } else {
-                console.error(`Map ${mapId} not found in ${filePath}`);
             }
-
         } catch (e) {
-            console.error(`Error adding lights in ${filePath}:`, e);
+            console.error(`Error adding lights:`, e);
+        }
+    }
+
+    public removeWall(mapId: number, wallToRemove: Wall) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) return;
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) return;
+
+            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
+            if (mapItem) {
+                const walls = mapItem.get('walls') as YAMLSeq;
+                if (!walls || !isCollection(walls)) return;
+
+                const indexToRemove = walls.items.findIndex((item: any) => {
+                    const w = item.toJSON() as Wall;
+                    return Math.abs(w.start.x - wallToRemove.start.x) < 0.1 &&
+                        Math.abs(w.start.y - wallToRemove.start.y) < 0.1 &&
+                        Math.abs(w.end.x - wallToRemove.end.x) < 0.1 &&
+                        Math.abs(w.end.y - wallToRemove.end.y) < 0.1;
+                });
+
+                if (indexToRemove !== -1) {
+                    walls.delete(indexToRemove);
+                    fs.writeFileSync(filePath, doc.toString());
+                }
+            }
+        } catch (e) {
+            console.error(`Error removing wall:`, e);
+        }
+    }
+
+    public removeLight(mapId: number, lightToRemove: Light) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) return;
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) return;
+
+            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
+            if (mapItem) {
+                const lights = mapItem.get('lights') as YAMLSeq;
+                if (!lights || !isCollection(lights)) return;
+
+                const indexToRemove = lights.items.findIndex((item: any) => {
+                    const l = item.toJSON() as Light;
+                    return Math.abs(l.x - lightToRemove.x) < 0.1 &&
+                        Math.abs(l.y - lightToRemove.y) < 0.1;
+                });
+
+                if (indexToRemove !== -1) {
+                    lights.delete(indexToRemove);
+                    fs.writeFileSync(filePath, doc.toString());
+                }
+            }
+        } catch (e) {
+            console.error(`Error removing light:`, e);
         }
     }
 
     private getAllYamlFiles(dir: string, fileList: string[] = []): string[] {
         const files = fs.readdirSync(dir);
-
         files.forEach(file => {
             const filePath = path.join(dir, file);
-            const stat = fs.statSync(filePath);
-
-            if (stat.isDirectory()) {
+            if (fs.statSync(filePath).isDirectory()) {
                 this.getAllYamlFiles(filePath, fileList);
-            } else {
-                if (file.endsWith('.yaml') || file.endsWith('.yml')) {
-                    fileList.push(filePath);
-                }
+            } else if (file.endsWith('.yaml') || file.endsWith('.yml')) {
+                fileList.push(filePath);
             }
         });
-
         return fileList;
     }
 }

@@ -125,8 +125,16 @@ io.on('connection', (socket) => {
         campaignManager.addWalls(data.mapId, data.walls);
     });
 
-    socket.on('add-lights', (data: { mapId: number, lights: any[] }) => {
-        campaignManager.addLights(data.mapId, data.lights);
+    socket.on('add-lights', ({ mapId, lights }) => {
+        campaignManager.addLights(mapId, lights);
+    });
+
+    socket.on('remove-wall', ({ mapId, wall }) => {
+        campaignManager.removeWall(mapId, wall);
+    });
+
+    socket.on('remove-light', ({ mapId, light }) => {
+        campaignManager.removeLight(mapId, light);
     });
 });
 

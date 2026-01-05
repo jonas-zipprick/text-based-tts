@@ -22,6 +22,8 @@ interface GameBoardProps {
     setStagePos: (pos: { x: number, y: number }) => void;
     onAddWalls: (mapId: number, walls: Wall[]) => void;
     onAddLights: (mapId: number, lights: Light[]) => void;
+    onRemoveWall: (mapId: number, wall: Wall) => void;
+    onRemoveLight: (mapId: number, light: Light) => void;
 }
 
 type MouseCoords = {
@@ -170,9 +172,15 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
     );
 };
 
-type EditorTool = 'select' | 'wall' | 'light';
+type EditorTool = 'select' | 'wall' | 'light' | 'trash';
 
-export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId, stageScale, setStageScale, stagePos, setStagePos, onAddWalls, onAddLights }: GameBoardProps) => {
+export const GameBoard = (props: GameBoardProps) => {
+    const {
+        campaign, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId,
+        activeMapId, stageScale, setStageScale, stagePos, setStagePos,
+        onAddWalls, onAddLights, onRemoveWall, onRemoveLight
+    } = props;
+
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
     if (!activeMap) return <div className="text-white p-4">Map not found.</div>;
 
@@ -343,6 +351,18 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
         });
     };
 
+    const getDistanceToSegment = (p: Point, s: Point, e: Point) => {
+        const l2 = (e.x - s.x) ** 2 + (e.y - s.y) ** 2;
+        if (l2 === 0) return Math.sqrt((p.x - s.x) ** 2 + (p.y - s.y) ** 2);
+        let t = ((p.x - s.x) * (e.x - s.x) + (p.y - s.y) * (e.y - s.y)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        const proj = {
+            x: s.x + t * (e.x - s.x),
+            y: s.y + t * (e.y - s.y)
+        };
+        return Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
+    };
+
     const handleStageClick = (e: any) => {
         if (view !== 'editor' || activeTool === 'select') return;
         const stage = e.target.getStage();
@@ -385,12 +405,7 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                 });
             }
         } else if (activeTool === 'light') {
-            const newLight: Light = {
-                x: gridX,
-                y: gridY,
-                radius: 6, // Default radius
-                color: "#f1c40f" // Default color
-            };
+            const newLight: Light = { x: gridX, y: gridY, radius: 6, color: '#f1c40f' }; // Reverted to original defaults
             const updatedLights = [...lightBuilderLights, newLight];
             setLightBuilderLights(updatedLights);
 
@@ -410,6 +425,35 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                 id: 'light-builder',
                 duration: Infinity
             });
+        } else if (activeTool === 'trash') {
+            const activeMap = campaign.maps.find(m => m.id === activeMapId);
+            if (!activeMap) return;
+
+            // Check lights first (they are smaller targets)
+            const hitLight = activeMap.lights?.find(l => {
+                const centerX = l.x * gridSize + gridSize / 2;
+                const centerY = l.y * gridSize + gridSize / 2;
+                const dist = Math.sqrt((clickPoint.x - centerX) ** 2 + (clickPoint.y - centerY) ** 2);
+                return dist < 20; // Increased hit radius for easier clicking
+            });
+
+            if (hitLight) {
+                onRemoveLight(activeMapId, hitLight);
+                return;
+            }
+
+            // Check walls
+            const wallScaler = activeMap.wallUnit === 'pixel' ? 1 : gridSize;
+            const hitWall = activeMap.walls?.find(w => {
+                const start = { x: w.start.x * wallScaler, y: w.start.y * wallScaler };
+                const end = { x: w.end.x * wallScaler, y: w.end.y * wallScaler };
+                const dist = getDistanceToSegment(clickPoint, start, end);
+                return dist < 15; // Increased tolerance for clicking wall lines
+            });
+
+            if (hitWall) {
+                onRemoveWall(activeMapId, hitWall);
+            }
         }
     };
 
@@ -661,6 +705,13 @@ export const GameBoard = ({ campaign, activeMapId, onTokenMove, onTokenDoubleCli
                         title="Light Tool"
                     >
                         💡
+                    </button>
+                    <button
+                        className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'trash' ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                        onClick={() => setActiveTool('trash')}
+                        title="Trash Tool"
+                    >
+                        🗑️
                     </button>
                 </div>
             )}

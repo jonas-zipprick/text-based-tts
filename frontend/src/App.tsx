@@ -96,6 +96,18 @@ function App() {
     }
   }, [socket]);
 
+  const handleRemoveWall = useCallback((mapId: number, wall: Wall) => {
+    if (socket) {
+      socket.emit('remove-wall', { mapId, wall });
+    }
+  }, [socket]);
+
+  const handleRemoveLight = useCallback((mapId: number, light: Light) => {
+    if (socket) {
+      socket.emit('remove-light', { mapId, light });
+    }
+  }, [socket]);
+
   const hasControlledTokens = useMemo(() => {
     if (!campaign) return false;
     return campaign.tokens.some(t => t.controlled_by?.some(c => c.sessionId === sessionId));
@@ -160,6 +172,8 @@ function App() {
         setStagePos={setStagePos}
         onAddWalls={handleAddWalls}
         onAddLights={handleAddLights}
+        onRemoveWall={handleRemoveWall}
+        onRemoveLight={handleRemoveLight}
       />
       {selectedToken && (
         <CharacterSheet
