@@ -198,6 +198,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     // We need to maintain `exploredPolys`.
     const [exploredPolys, setExploredPolys] = useState<Point[][]>([]);
 
+    // Reset explored areas when switching maps
+    useEffect(() => {
+        setExploredPolys([]);
+    }, [activeMapId]);
+
 
     // Update Explored Polys
     useEffect(() => {
