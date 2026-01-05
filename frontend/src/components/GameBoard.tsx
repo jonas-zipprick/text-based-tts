@@ -24,8 +24,8 @@ const BackgroundImage = ({ src, width, height }: { src: string, width: number, h
     return <KonvaImage image={image} width={width} height={height} />;
 };
 
-const TokenComponent = ({ token, gridSize, onMove }: { token: Token, gridSize: number, onMove: (id: number, x: number, y: number) => void }) => {
-    const pos = token.position?.[0]; // Default to first position
+const TokenComponent = ({ token, gridSize, onMove, activeMapId }: { token: Token, gridSize: number, onMove: (id: number, x: number, y: number) => void, activeMapId: number }) => {
+    const pos = token.position?.find(p => p.map === activeMapId);
     if (!pos) return null;
 
     const imageUrl = token.picture ? `${URL_PREFIX}${token.picture}` : null;
@@ -35,19 +35,8 @@ const TokenComponent = ({ token, gridSize, onMove }: { token: Token, gridSize: n
     const y = pos.y * gridSize;
     const radius = gridSize / 2 * 0.8;
 
-    const handleDragEnd = (e: any) => {
-        const newX = Math.round(e.target.x() / gridSize);
-        const newY = Math.round(e.target.y() / gridSize);
-        onMove(token.id, newX, newY);
-        e.target.to({
-            x: newX * gridSize + gridSize / 2 - (image ? radius : 0),
-            y: newY * gridSize + gridSize / 2 - (image ? radius : 0)
-        });
-    };
-
     const kArgs = {
         draggable: true,
-        onDragEnd: handleDragEnd,
     };
 
     if (image) {
@@ -64,6 +53,13 @@ const TokenComponent = ({ token, gridSize, onMove }: { token: Token, gridSize: n
                     const newX = Math.round((e.target.x() - (gridSize / 2 - radius)) / gridSize);
                     const newY = Math.round((e.target.y() - (gridSize / 2 - radius)) / gridSize);
                     onMove(token.id, newX, newY);
+
+                    // Snap back to grid center
+                    e.target.to({
+                        x: newX * gridSize + gridSize / 2 - radius,
+                        y: newY * gridSize + gridSize / 2 - radius,
+                        duration: 0.1
+                    });
                 }}
             />
         );
@@ -82,6 +78,13 @@ const TokenComponent = ({ token, gridSize, onMove }: { token: Token, gridSize: n
                 const newX = Math.round((e.target.x() - gridSize / 2) / gridSize);
                 const newY = Math.round((e.target.y() - gridSize / 2) / gridSize);
                 onMove(token.id, newX, newY);
+
+                // Snap back to grid center
+                e.target.to({
+                    x: newX * gridSize + gridSize / 2,
+                    y: newY * gridSize + gridSize / 2,
+                    duration: 0.1
+                });
             }}
         />
     );
@@ -308,6 +311,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                                         token={token}
                                         gridSize={gridSize}
                                         onMove={(id, x, y) => onTokenMove(id, { x, y, map: activeMap.id })}
+                                        activeMapId={activeMap.id}
                                     />
                                 );
                             }
