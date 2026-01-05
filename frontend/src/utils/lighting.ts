@@ -105,7 +105,15 @@ export function pointsToPoly(points: Point[]): Poly {
 }
 
 export function polyToPoints(poly: Poly): Point[] {
-    return poly.map(p => ({ x: p[0], y: p[1] }));
+    const points = poly.map(p => ({ x: p[0], y: p[1] }));
+    if (points.length > 1) {
+        const first = points[0];
+        const last = points[points.length - 1];
+        if (first.x === last.x && first.y === last.y) {
+            points.pop();
+        }
+    }
+    return points;
 }
 
 export function unionPolygons(polys: Point[][]): Point[][] {
