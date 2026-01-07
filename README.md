@@ -13,12 +13,11 @@ But this project is more reduced to the essentials and all the game definition i
 - **Campaign Validation**: Includes a [YAML schema](file:///home/jonas/projects/pnp-board/campaign-schema.json) for autocompletion and error checking in your IDE.
 
 ## Non-Features
-- Voice chat
-- Text Chate
+- Voice Chat
+- Text Chat
 - Disabling Dynamic Lighting (always enabled)
 - Disabling Fog of War (always enabled)
 - Plugins
-- Rolling Virtual Dice
 - Restricting controll of tokens to certain players
 
 ## Getting Started
