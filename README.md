@@ -73,7 +73,7 @@ maps:
   - picture: "pictures/maps/village.jpg"
     size: fullscreen
   walls:
-  # Map boundaries (prevents tokens from leaving the map)
+  # Map boundaries (prevents tokens from seing beyond the map)
   - start: {x: 0, y: 0}
     end: {x: 900, y: 0}
   - start: {x: 900, y: 0}
