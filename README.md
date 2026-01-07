@@ -95,7 +95,7 @@ Create player files in `campaign/entities/players/`. Players need a `sessionId` 
 
 ```yaml
 tokens:
-  - id: 10001                    # Unique ID (use 10000+ for players)
+  - id: 10001                    # Unique ID (recomendation: use 10000+ for players)
     name: "Hero"
     picture: pictures/tokens/hero.png
     controlled_by:
@@ -142,7 +142,7 @@ Create NPC files in `campaign/entities/npcs/`. NPCs have `controlled_by: []` so 
 
 ```yaml
 tokens:
-  - id: 20001                    # Unique ID (use 20000+ for NPCs)
+  - id: 20001                    # Unique ID (recomendation: use 20000+ for NPCs)
     name: "Friendly Villager"
     picture: "pictures/tokens/villager.png"
     controlled_by: []            # Empty = GM only
@@ -193,7 +193,7 @@ Place your images in the `campaign/assets/pictures/` folder:
 
 2. **Start the development server:**
    ```bash
-   cd frontend && npm run dev
+   npm run dev
    ```
 
 3. **Open the application** in your browser at `http://localhost:5174/`
