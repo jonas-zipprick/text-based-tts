@@ -32,7 +32,7 @@ export type MapData = {
     lights: Light[];
 };
 
-export type TokenAction = {
+export type TokenAttack = {
     name: string;
     description?: string;
     modifiers?: {
@@ -102,8 +102,8 @@ export type TokenStats = {
     challenge?: number;
     xp?: number;
     traits?: TokenTrait[];
-    actions?: TokenAction[];
-    legendaryActions?: TokenAction[];
+    attacks?: TokenAttack[];
+    legendaryAttacks?: TokenAttack[];
     spells?: Spell[];
 };
 

@@ -122,7 +122,7 @@ tokens:
         int: 10
         wis: 12
         cha: 8
-      actions:
+      attacks:
         - name: Longsword
           modifiers:
             attack: 5
@@ -166,7 +166,7 @@ tokens:
         int: 12
         wis: 14
         cha: 16
-      actions:
+      attacks:
         - name: Dagger
           modifiers:
             attack: 3
@@ -239,7 +239,7 @@ tokens:
         int: 10
         #...
       #...
-      actions:
+      attacks:
         - name: club
           modifiers:
             attack: 2
@@ -298,7 +298,7 @@ tokens:
         int: 10
         #...
       #...
-      actions:
+      attacks:
         - name: club
           modifiers:
             attack: 2

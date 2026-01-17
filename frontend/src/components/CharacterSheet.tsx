@@ -157,7 +157,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         // Small delay to ensure styles are applied and fonts are loaded
         const timer = setTimeout(autoResizeAll, 50);
         return () => clearTimeout(timer);
-    }, [autoResizeAll, localToken.stats.actions]);
+    }, [autoResizeAll, localToken.stats.attacks]);
 
 
 
@@ -635,10 +635,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     )}
 
                     {/* Actions */}
-                    {localToken.stats.actions && localToken.stats.actions.length > 0 && (
+                    {localToken.stats.attacks && localToken.stats.attacks.length > 0 && (
                         <>
                             <h2 className="cs-section-title">Actions</h2>
-                            {localToken.stats.actions.map((action, index) => {
+                            {localToken.stats.attacks.map((action, index) => {
                                 const isWeapon = action.modifiers?.attack !== undefined || action.ability !== undefined;
                                 return (
                                     <div className="cs-action" key={index}>
@@ -647,7 +647,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 type="text"
                                                 className="cs-editable cs-action-name"
                                                 value={action.name}
-                                                onChange={e => updateField(`stats.actions.${index}.name`, e.target.value)}
+                                                onChange={e => updateField(`stats.attacks.${index}.name`, e.target.value)}
                                             />
                                             {(isWeapon || action.hit || action.extraDamage) && (
                                                 <button
@@ -663,7 +663,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             <textarea
                                                 className="cs-editable-desc"
                                                 value={action.description || ''}
-                                                onChange={e => updateField(`stats.actions.${index}.description`, e.target.value)}
+                                                onChange={e => updateField(`stats.attacks.${index}.description`, e.target.value)}
                                                 placeholder="Action description..."
                                                 rows={1}
                                                 onInput={(e: any) => {
@@ -679,11 +679,11 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                         value={action.range ? 'Ranged' : 'Melee'}
                                                         onChange={e => {
                                                             if (e.target.value === 'Ranged') {
-                                                                updateField(`stats.actions.${index}.range`, 30);
-                                                                updateField(`stats.actions.${index}.reach`, undefined);
+                                                                updateField(`stats.attacks.${index}.range`, 30);
+                                                                updateField(`stats.attacks.${index}.reach`, undefined);
                                                             } else {
-                                                                updateField(`stats.actions.${index}.reach`, 5);
-                                                                updateField(`stats.actions.${index}.range`, undefined);
+                                                                updateField(`stats.attacks.${index}.reach`, 5);
+                                                                updateField(`stats.attacks.${index}.range`, undefined);
                                                             }
                                                         }}
                                                     >
@@ -693,7 +693,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <select
                                                         className="cs-editable-select"
                                                         value={action.ability || ''}
-                                                        onChange={e => updateField(`stats.actions.${index}.ability`, e.target.value || undefined)}
+                                                        onChange={e => updateField(`stats.attacks.${index}.ability`, e.target.value || undefined)}
                                                     >
                                                         <option value="">(None)</option>
                                                         <option value="str">STR</option>
@@ -709,7 +709,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                             <input
                                                                 type="checkbox"
                                                                 checked={action.proficient || false}
-                                                                onChange={e => updateField(`stats.actions.${index}.proficient`, e.target.checked)}
+                                                                onChange={e => updateField(`stats.attacks.${index}.proficient`, e.target.checked)}
                                                             />
                                                             Prof
                                                         </label>
@@ -719,7 +719,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={action.modifiers?.attack || 0}
-                                                        onChange={e => updateField(`stats.actions.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
+                                                        onChange={e => updateField(`stats.attacks.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
                                                         style={{ width: '30px' }}
                                                     />
 
@@ -739,7 +739,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                             <AutoExpandingInput
                                                                 type="text"
                                                                 value={action.range}
-                                                                onChange={e => updateField(`stats.actions.${index}.range`, parseInt(e.target.value) || '')}
+                                                                onChange={e => updateField(`stats.attacks.${index}.range`, parseInt(e.target.value) || '')}
                                                             />
                                                             <span> ft.</span>
                                                         </>
@@ -749,7 +749,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                             <AutoExpandingInput
                                                                 type="text"
                                                                 value={action.reach || 5}
-                                                                onChange={e => updateField(`stats.actions.${index}.reach`, parseInt(e.target.value) || '')}
+                                                                onChange={e => updateField(`stats.attacks.${index}.reach`, parseInt(e.target.value) || '')}
                                                             />
                                                             <span> ft.</span>
                                                         </>
@@ -758,7 +758,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={action.targets || 1}
-                                                        onChange={e => updateField(`stats.actions.${index}.targets`, parseInt(e.target.value) || 1)}
+                                                        onChange={e => updateField(`stats.attacks.${index}.targets`, parseInt(e.target.value) || 1)}
                                                     />
                                                     <span> target(s).</span>
                                                 </div>
@@ -768,13 +768,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 <AutoExpandingInput
                                                     type="text"
                                                     value={action.hit || ''}
-                                                    onChange={e => updateField(`stats.actions.${index}.hit`, e.target.value)}
+                                                    onChange={e => updateField(`stats.attacks.${index}.hit`, e.target.value)}
                                                     placeholder="dice (e.g. 1d8+2)"
                                                 />
                                                 <AutoExpandingInput
                                                     type="text"
                                                     value={action.type || ''}
-                                                    onChange={e => updateField(`stats.actions.${index}.type`, e.target.value)}
+                                                    onChange={e => updateField(`stats.attacks.${index}.type`, e.target.value)}
                                                     placeholder="type"
                                                     style={{ fontStyle: 'italic' }}
                                                 />
@@ -786,13 +786,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={extra.hit || ''}
-                                                        onChange={e => updateField(`stats.actions.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
+                                                        onChange={e => updateField(`stats.attacks.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
                                                         placeholder="dice"
                                                     />
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={extra.type || ''}
-                                                        onChange={e => updateField(`stats.actions.${index}.extraDamage.${eIdx}.type`, e.target.value)}
+                                                        onChange={e => updateField(`stats.attacks.${index}.extraDamage.${eIdx}.type`, e.target.value)}
                                                         placeholder="type"
                                                         style={{ fontStyle: 'italic' }}
                                                     />
@@ -807,10 +807,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     )}
 
                     {/* Legendary Actions */}
-                    {localToken.stats.legendaryActions && localToken.stats.legendaryActions.length > 0 && (
+                    {localToken.stats.legendaryAttacks && localToken.stats.legendaryAttacks.length > 0 && (
                         <>
                             <h2 className="cs-section-title">Legendary Actions</h2>
-                            {localToken.stats.legendaryActions.map((action, index) => {
+                            {localToken.stats.legendaryAttacks.map((action, index) => {
                                 const isRollable = action.modifiers?.attack !== undefined || action.ability !== undefined || action.hit !== undefined;
                                 return (
                                     <div className="cs-action" key={index}>
@@ -819,7 +819,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 type="text"
                                                 className="cs-editable cs-action-name"
                                                 value={action.name}
-                                                onChange={e => updateField(`stats.legendaryActions.${index}.name`, e.target.value)}
+                                                onChange={e => updateField(`stats.legendaryAttacks.${index}.name`, e.target.value)}
                                             />
                                             {isRollable && (
                                                 <button
@@ -835,7 +835,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             <textarea
                                                 className="cs-editable-desc"
                                                 value={action.description || ''}
-                                                onChange={e => updateField(`stats.legendaryActions.${index}.description`, e.target.value)}
+                                                onChange={e => updateField(`stats.legendaryAttacks.${index}.description`, e.target.value)}
                                                 placeholder="Action description..."
                                                 rows={1}
                                                 onInput={(e: any) => {
@@ -849,7 +849,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <select
                                                         className="cs-editable-select"
                                                         value={action.ability || ''}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.ability`, e.target.value || undefined)}
+                                                        onChange={e => updateField(`stats.legendaryAttacks.${index}.ability`, e.target.value || undefined)}
                                                     >
                                                         <option value="">(None)</option>
                                                         <option value="str">STR</option>
@@ -865,7 +865,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                             <input
                                                                 type="checkbox"
                                                                 checked={action.proficient || false}
-                                                                onChange={e => updateField(`stats.legendaryActions.${index}.proficient`, e.target.checked)}
+                                                                onChange={e => updateField(`stats.legendaryAttacks.${index}.proficient`, e.target.checked)}
                                                             />
                                                             Prof
                                                         </label>
@@ -875,7 +875,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={action.modifiers?.attack || ''}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
+                                                        onChange={e => updateField(`stats.legendaryAttacks.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
                                                         style={{ width: '30px' }}
                                                     />
 
@@ -897,13 +897,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={action.hit || ''}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.hit`, e.target.value)}
+                                                        onChange={e => updateField(`stats.legendaryAttacks.${index}.hit`, e.target.value)}
                                                         placeholder="dice"
                                                     />
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={action.type || ''}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.type`, e.target.value)}
+                                                        onChange={e => updateField(`stats.legendaryAttacks.${index}.type`, e.target.value)}
                                                         placeholder="type"
                                                         style={{ fontStyle: 'italic' }}
                                                     />
@@ -916,13 +916,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={extra.hit || ''}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
+                                                        onChange={e => updateField(`stats.legendaryAttacks.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
                                                         placeholder="dice"
                                                     />
                                                     <AutoExpandingInput
                                                         type="text"
                                                         value={extra.type || ''}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.extraDamage.${eIdx}.type`, e.target.value)}
+                                                        onChange={e => updateField(`stats.legendaryAttacks.${index}.extraDamage.${eIdx}.type`, e.target.value)}
                                                         placeholder="type"
                                                         style={{ fontStyle: 'italic' }}
                                                     />
