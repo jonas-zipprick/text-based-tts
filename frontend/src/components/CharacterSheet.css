@@ -632,3 +632,95 @@
 .cs-btn-small:hover {
     background: #7a200d;
 }
+
+/* Spell Slots */
+.cs-spell-slots-section {
+    margin-bottom: 20px;
+}
+
+.cs-section-subtitle {
+    font-size: 16px;
+    font-weight: bold;
+    color: #58180d;
+    margin: 0 0 8px 0;
+    font-style: italic;
+    border-bottom: 1px solid rgba(88, 24, 13, 0.2);
+}
+
+.cs-slots-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cs-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.cs-slot-label {
+    font-weight: bold;
+    color: #58180d;
+    min-width: 40px;
+}
+
+.cs-slot-tracker {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cs-slot-checkbox {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #58180d;
+    border-radius: 2px;
+    cursor: pointer;
+    background: transparent;
+    position: relative;
+}
+
+.cs-slot-checkbox:checked {
+    background: #58180d;
+}
+
+.cs-slot-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    width: 3px;
+    height: 6px;
+    border: solid #fdf1dc;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.cs-slot-max-input {
+    width: 40px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed #58180d;
+    padding: 0 2px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    margin-left: 8px;
+}
+
+.cs-slot-max-input:focus {
+    outline: none;
+    border-bottom-style: solid;
+    color: #333;
+}
+
+/* Disabled button state */
+.cs-btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #999 !important;
+}

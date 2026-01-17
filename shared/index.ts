@@ -105,6 +105,12 @@ export type TokenStats = {
     attacks?: TokenAttack[];
     legendaryAttacks?: TokenAttack[];
     spells?: Spell[];
+    spellSlots?: {
+        [level: string]: {
+            max: number;
+            used: number;
+        };
+    };
 };
 
 export type TokenVisibility = {
@@ -152,13 +158,17 @@ export type GameState = {
 export type RollEvent = {
     tokenName: string;
     actionName: string;
-    attack: {
+    attack?: {
         total: number;
         d20: number;
         mod: number;
         sign: string;
         type: 'normal' | 'crit' | 'fail';
         breakdown?: string;
+    };
+    save?: {
+        dc: number;
+        ability: string;
     };
     damage?: {
         total: number;

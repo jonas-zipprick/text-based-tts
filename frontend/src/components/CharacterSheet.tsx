@@ -348,12 +348,110 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             };
 
             toast.custom((t) => <ToastNotification data={rollData} t={t} />, { duration: 4000 });
-
-            if (onRoll) {
-                onRoll(rollData);
-            }
+            if (onRoll) onRoll(rollData);
         }
     };
+
+
+
+    const handleSpellClick = (spell: any) => {
+        // Spell Slot Logic
+        if (spell.level > 0 && localToken.stats.spellSlots) {
+            const slotLevel = spell.level.toString();
+            const slots = localToken.stats.spellSlots[slotLevel];
+
+            if (slots) {
+                if (slots.used >= slots.max) {
+                    toast.error(`No Level ${spell.level} spell slots available!`);
+                    return;
+                }
+
+                // Consume slot
+                // Update local and trigger save
+                const newUsed = slots.used + 1;
+                updateField(`stats.spellSlots.${slotLevel}.used`, newUsed);
+            }
+        }
+
+        // Spell Slot Logic
+        if (spell.level > 0 && localToken.stats.spellSlots) {
+            const slotLevel = spell.level.toString();
+            const slots = localToken.stats.spellSlots[slotLevel];
+
+            if (slots) {
+                if (slots.used >= slots.max) {
+                    toast.error(`No Level ${spell.level} spell slots available!`);
+                    return;
+                }
+
+                // Consume slot
+                // Update local and trigger save
+                const newUsed = slots.used + 1;
+                updateField(`stats.spellSlots.${slotLevel}.used`, newUsed);
+            }
+        }
+
+        let attackData = undefined;
+        let breakdownParts: string[] = [];
+
+        // Attack Roll
+        if (spell.attack_bonus) {
+            const d20 = Math.floor(Math.random() * 20) + 1;
+
+            // Try parsing attack bonus as number or dice formula? usually just a number string in APIs
+            // If string "8" -> 8. If "1d4+2" -> well, 5e usually represents spell attacks as flat modifiers.
+            // Schema says string, but let's try strict parse.
+            let mod = parseInt(spell.attack_bonus);
+            if (isNaN(mod)) mod = 0; // Fallback
+
+            const total = d20 + mod;
+            breakdownParts.push(`${mod >= 0 ? '+' : ''}${mod}`);
+
+            attackData = {
+                total,
+                d20,
+                mod,
+                sign: mod >= 0 ? '+' : '',
+                type: d20 === 20 ? 'crit' : (d20 === 1 ? 'fail' : 'normal') as any, // Cast to match type
+                breakdown: `${d20} ${breakdownParts.join(' ')}`
+            };
+        }
+
+        // Damage
+        let damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
+        if (spell.damage && spell.damage.dice) {
+            const dr = parseDice(spell.damage.dice);
+            if (dr) {
+                damageResults.push({
+                    total: dr.roll,
+                    type: spell.damage.type,
+                    formula: spell.damage.dice,
+                    resultText: dr.text
+                });
+            }
+        }
+
+        // Save
+        let saveData = undefined;
+        if (spell.save) {
+            saveData = {
+                dc: spell.save.dc || 10,
+                ability: spell.save.ability
+            };
+        }
+
+        const rollData: RollEvent = {
+            tokenName: localToken.name,
+            actionName: spell.name,
+            attack: attackData,
+            save: saveData,
+            damage: damageResults.length > 0 ? damageResults : undefined
+        };
+
+        toast.custom((t) => <ToastNotification data={rollData} t={t} />, { duration: 4000 });
+        if (onRoll) onRoll(rollData);
+    };
+
 
     return (
         <div className="character-sheet-overlay">
@@ -634,10 +732,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         </>
                     )}
 
-                    {/* Actions */}
+                    {/* Attacks */}
                     {localToken.stats.attacks && localToken.stats.attacks.length > 0 && (
                         <>
-                            <h2 className="cs-section-title">Actions</h2>
+                            <h2 className="cs-section-title">Attacks</h2>
                             {localToken.stats.attacks.map((action, index) => {
                                 const isWeapon = action.modifiers?.attack !== undefined || action.ability !== undefined;
                                 return (
@@ -806,6 +904,186 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         </>
                     )}
 
+                    {/* Spell Slots */}
+                    {localToken.stats.spells && localToken.stats.spells.length > 0 && (
+                        <div className="cs-spell-slots-section">
+                            <h3 className="cs-section-subtitle">Spell Slots</h3>
+                            <div className="cs-slots-grid">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
+                                    const slots = localToken.stats.spellSlots?.[level.toString()] || { max: 0, used: 0 };
+                                    // Only show if max > 0, or if we want to allow editing?
+                                    // Let's show all for now so they can be edited.
+                                    // Or maybe just show 1-5 by default?
+                                    return (
+                                        <div key={level} className="cs-slot-row">
+                                            <span className="cs-slot-label">Lvl {level}</span>
+                                            <div className="cs-slot-tracker">
+                                                {/* Squares for max slots */}
+                                                {Array.from({ length: Math.max(slots.max, 4) }).map((_, i) => {
+                                                    if (i < slots.max) {
+                                                        return (
+                                                            <input
+                                                                key={i}
+                                                                type="checkbox"
+                                                                className="cs-slot-checkbox"
+                                                                checked={i < slots.used}
+                                                                onChange={() => {
+                                                                    const newUsed = i < slots.used ? i : i + 1;
+                                                                    updateField(`stats.spellSlots.${level}.used`, newUsed);
+                                                                }}
+                                                            />
+                                                        );
+                                                    }
+                                                    return null;
+                                                })}
+                                                {/* Edit Max */}
+                                                <input
+                                                    type="number"
+                                                    className="cs-slot-max-input"
+                                                    value={slots.max}
+                                                    onChange={e => updateField(`stats.spellSlots.${level}.max`, parseInt(e.target.value) || 0)}
+                                                    title="Max Slots"
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Spells */}
+                    {localToken.stats.spells && localToken.stats.spells.length > 0 && (
+                        <>
+                            <h2 className="cs-section-title">Spells</h2>
+                            {localToken.stats.spells.map((spell, index) => {
+                                const levelText = spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`;
+
+
+                                const slotLevel = spell.level.toString();
+                                const slots = localToken.stats.spellSlots?.[slotLevel];
+                                const hasSlots = spell.level === 0 || (slots ? slots.used < slots.max : false);
+
+                                return (
+                                    <div className="cs-action" key={index}>
+                                        <div className="cs-action-header">
+                                            <input
+                                                type="text"
+                                                className="cs-editable cs-action-name"
+                                                value={spell.name}
+                                                onChange={e => updateField(`stats.spells.${index}.name`, e.target.value)}
+                                            />
+                                            <span className="cs-spell-meta">
+                                                {levelText} - {spell.school}
+                                            </span>
+                                            <button
+                                                className={`cs-roll-btn ${!hasSlots ? 'cs-btn-disabled' : ''}`}
+                                                onClick={() => hasSlots ? handleSpellClick(spell) : toast.error("No spell slots!")}
+                                                title={hasSlots ? "Cast spell" : "No spell slots available"}
+                                                disabled={!hasSlots}
+                                            >
+                                                ✨ Cast
+                                            </button>
+                                        </div>
+                                        <div className="cs-action-body">
+                                            <div className="cs-spell-details">
+                                                <span>Time: </span>
+                                                <AutoExpandingInput type="text" value={spell.casting_time} onChange={e => updateField(`stats.spells.${index}.casting_time`, e.target.value)} />
+                                                <span> | Range: </span>
+                                                <AutoExpandingInput type="text" value={spell.range} onChange={e => updateField(`stats.spells.${index}.range`, e.target.value)} />
+                                                <span> | Dur: </span>
+                                                <AutoExpandingInput type="text" value={spell.duration} onChange={e => updateField(`stats.spells.${index}.duration`, e.target.value)} />
+                                            </div>
+                                            <div className="cs-spell-comps">
+                                                <label><input type="checkbox" checked={spell.components.verbal} onChange={e => updateField(`stats.spells.${index}.components.verbal`, e.target.checked)} /> V</label>
+                                                <label><input type="checkbox" checked={spell.components.somatic} onChange={e => updateField(`stats.spells.${index}.components.somatic`, e.target.checked)} /> S</label>
+                                                <label><input type="checkbox" checked={spell.components.material} onChange={e => updateField(`stats.spells.${index}.components.material`, e.target.checked)} /> M</label>
+                                                {spell.components.material && (
+                                                    <AutoExpandingInput
+                                                        type="text"
+                                                        value={spell.components.material_cost || ''}
+                                                        onChange={e => updateField(`stats.spells.${index}.components.material_cost`, e.target.value)}
+                                                        placeholder="(materials)"
+                                                        style={{ fontStyle: 'italic', marginLeft: '4px' }}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            <textarea
+                                                className="cs-editable-desc"
+                                                value={spell.description || ''}
+                                                onChange={e => updateField(`stats.spells.${index}.description`, e.target.value)}
+                                                placeholder="Spell description..."
+                                                rows={1}
+                                                onInput={(e: any) => {
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+
+                                            {/* Spell Stats (Attack/Save/Damage) */}
+                                            <div className="cs-action-stats">
+                                                {(spell.attack_bonus !== undefined || (spell.damage && spell.damage.dice)) && (
+                                                    <div className="cs-action-hit-row">
+                                                        {spell.attack_bonus !== undefined && (
+                                                            <>
+                                                                <span>Attack: +</span>
+                                                                <AutoExpandingInput
+                                                                    type="text"
+                                                                    value={spell.attack_bonus}
+                                                                    onChange={e => updateField(`stats.spells.${index}.attack_bonus`, e.target.value)}
+                                                                />
+                                                            </>
+                                                        )}
+                                                        {spell.damage && (
+                                                            <>
+                                                                <span style={{ marginLeft: spell.attack_bonus ? '8px' : '0' }}>Damage: </span>
+                                                                <AutoExpandingInput
+                                                                    type="text"
+                                                                    value={spell.damage.dice}
+                                                                    onChange={e => updateField(`stats.spells.${index}.damage.dice`, e.target.value)}
+                                                                />
+                                                                <AutoExpandingInput
+                                                                    type="text"
+                                                                    value={spell.damage.type}
+                                                                    onChange={e => updateField(`stats.spells.${index}.damage.type`, e.target.value)}
+                                                                    style={{ fontStyle: 'italic' }}
+                                                                />
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {spell.save && (
+                                                    <div className="cs-action-hit-row">
+                                                        <span>Save: DC </span>
+                                                        <AutoExpandingInput
+                                                            type="text"
+                                                            value={spell.save.dc || ''}
+                                                            onChange={e => updateField(`stats.spells.${index}.save.dc`, parseInt(e.target.value))}
+                                                        />
+                                                        <select
+                                                            className="cs-editable-select"
+                                                            value={spell.save.ability}
+                                                            onChange={e => updateField(`stats.spells.${index}.save.ability`, e.target.value)}
+                                                        >
+                                                            <option value="str">STR</option>
+                                                            <option value="dex">DEX</option>
+                                                            <option value="con">CON</option>
+                                                            <option value="int">INT</option>
+                                                            <option value="wis">WIS</option>
+                                                            <option value="cha">CHA</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
+
                     {/* Legendary Actions */}
                     {localToken.stats.legendaryAttacks && localToken.stats.legendaryAttacks.length > 0 && (
                         <>
@@ -940,5 +1218,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
             </div>
         </div>
+
     );
 };

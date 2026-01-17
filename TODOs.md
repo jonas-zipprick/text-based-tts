@@ -1,0 +1,1 @@
+- Remove "Legendary Attacks". Should just be normal attacks
