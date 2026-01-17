@@ -10,7 +10,7 @@
     background: #fdf1dc;
     border: 2px solid #58180d;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    width: 400px;
+    width: 500px;
     max-height: calc(100vh - 40px);
     position: relative;
     font-family: 'Libre Baskerville', 'Georgia', serif;
@@ -396,11 +396,6 @@
 
 .cs-editable-wide {
     width: 100% !important;
-}
-
-.cs-editable-number {
-    width: 40px;
-    text-align: center;
 }
 
 /* Add buttons */

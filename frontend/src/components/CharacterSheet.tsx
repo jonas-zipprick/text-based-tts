@@ -57,7 +57,7 @@ const AutoExpandingInput: React.FC<AutoExpandingInputProps> = ({ className = '',
 
     useEffect(() => {
         if (spanRef.current) {
-            setWidth(spanRef.current.offsetWidth + 2); // Small buffer
+            setWidth(spanRef.current.offsetWidth + 6); // Small buffer
         }
     }, [props.value, props.placeholder]);
 
@@ -382,11 +382,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     <div className="cs-core-stats">
                         <div className="cs-stat-line">
                             <span className="cs-stat-label">Armor Class</span>
-                            <input
-                                type="number"
-                                className="cs-editable cs-editable-number"
+                            <AutoExpandingInput
+                                type="text"
                                 value={localToken.stats.ac}
-                                onChange={e => updateField('stats.ac', parseInt(e.target.value) || 0)}
+                                onChange={e => updateField('stats.ac', parseInt(e.target.value) || '')}
                             />
                             <AutoExpandingInput
                                 type="text"
@@ -399,11 +398,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
                         <div className="cs-stat-line cs-hp-section">
                             <span className="cs-stat-label">Hit Points</span>
-                            <input
-                                type="number"
-                                className="cs-editable cs-editable-number"
+                            <AutoExpandingInput
+                                type="text"
                                 value={maxHp}
-                                onChange={e => updateField('stats.hp', parseInt(e.target.value) || 0)}
+                                onChange={e => updateField('stats.hp', parseInt(e.target.value) || '')}
                             />
                             <AutoExpandingInput
                                 type="text"
@@ -415,7 +413,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-hp-current">
                                 <span>Current:</span>
                                 <span style={{ fontWeight: 'bold' }}>{currentHp}/{maxHp}</span>
-                                <input
+                                <AutoExpandingInput
                                     type="text"
                                     className="cs-hp-input"
                                     value={hpInput}
@@ -430,11 +428,11 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
                         <div className="cs-stat-line">
                             <span className="cs-stat-label">Speed</span>
-                            <input
-                                type="number"
-                                className="cs-editable cs-editable-number"
+                            <AutoExpandingInput
+                                type="text"
+                                className="cs-editable"
                                 value={localToken.stats.speed}
-                                onChange={e => updateField('stats.speed', parseInt(e.target.value) || 0)}
+                                onChange={e => updateField('stats.speed', e.target.value ? parseInt(e.target.value) : '')}
                             />
                             <span>ft.</span>
                         </div>
@@ -447,9 +445,9 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {['str', 'dex', 'con', 'int', 'wis', 'cha'].map(attr => (
                             <div className="cs-attribute" key={attr}>
                                 <div className="cs-attr-label">{attr.toUpperCase()}</div>
-                                <input
-                                    type="number"
-                                    className="cs-editable cs-editable-number cs-attr-value"
+                                <AutoExpandingInput
+                                    type="text"
+                                    className="cs-attr-value"
                                     value={attrs[attr] || 10}
                                     onChange={e => {
                                         const newAttrs = { ...attrs, [attr]: parseInt(e.target.value) || 10 };
@@ -558,11 +556,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         {localToken.stats.challenge !== undefined && (
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Challenge </span>
-                                <input
-                                    type="number"
-                                    className="cs-editable cs-editable-number"
+                                <AutoExpandingInput
+                                    type="string"
                                     value={localToken.stats.challenge}
-                                    onChange={e => updateField('stats.challenge', parseFloat(e.target.value) || 0)}
+                                    onChange={e => updateField('stats.challenge', parseFloat(e.target.value) || '')}
                                 />
                                 {localToken.stats.xp !== undefined && (
                                     <span> ({localToken.stats.xp.toLocaleString()} XP)</span>
@@ -668,11 +665,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     )}
 
                                                     <span> +</span>
-                                                    <input
-                                                        type="number"
-                                                        className="cs-editable cs-editable-number"
+                                                    <AutoExpandingInput
+                                                        type="text"
                                                         value={action.modifiers?.attack || 0}
-                                                        onChange={e => updateField(`stats.actions.${index}.modifiers.attack`, parseInt(e.target.value) || 0)}
+                                                        onChange={e => updateField(`stats.actions.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
                                                         style={{ width: '30px' }}
                                                     />
 
@@ -689,30 +685,27 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     {action.range ? (
                                                         <>
                                                             <span>Range </span>
-                                                            <input
-                                                                type="number"
-                                                                className="cs-editable cs-editable-number"
+                                                            <AutoExpandingInput
+                                                                type="text"
                                                                 value={action.range}
-                                                                onChange={e => updateField(`stats.actions.${index}.range`, parseInt(e.target.value) || 0)}
+                                                                onChange={e => updateField(`stats.actions.${index}.range`, parseInt(e.target.value) || '')}
                                                             />
                                                             <span> ft.</span>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <span>Reach </span>
-                                                            <input
-                                                                type="number"
-                                                                className="cs-editable cs-editable-number"
+                                                            <AutoExpandingInput
+                                                                type="text"
                                                                 value={action.reach || 5}
-                                                                onChange={e => updateField(`stats.actions.${index}.reach`, parseInt(e.target.value) || 0)}
+                                                                onChange={e => updateField(`stats.actions.${index}.reach`, parseInt(e.target.value) || '')}
                                                             />
                                                             <span> ft.</span>
                                                         </>
                                                     )}
                                                     <span>, </span>
-                                                    <input
-                                                        type="number"
-                                                        className="cs-editable cs-editable-number"
+                                                    <AutoExpandingInput
+                                                        type="text"
                                                         value={action.targets || 1}
                                                         onChange={e => updateField(`stats.actions.${index}.targets`, parseInt(e.target.value) || 1)}
                                                     />
@@ -828,11 +821,10 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     )}
 
                                                     <span> +</span>
-                                                    <input
-                                                        type="number"
-                                                        className="cs-editable cs-editable-number"
-                                                        value={action.modifiers?.attack || 0}
-                                                        onChange={e => updateField(`stats.legendaryActions.${index}.modifiers.attack`, parseInt(e.target.value) || 0)}
+                                                    <AutoExpandingInput
+                                                        type="text"
+                                                        value={action.modifiers?.attack || ''}
+                                                        onChange={e => updateField(`stats.legendaryActions.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
                                                         style={{ width: '30px' }}
                                                     />
 
