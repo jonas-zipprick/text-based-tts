@@ -166,6 +166,85 @@ tokens: []
         });
     });
 
+    describe('addToken', () => {
+        it('should add new token to the same file as the blueprint', () => {
+            // Setup: Blueprint exists in a specific NPC file
+            (fs.readdirSync as jest.Mock).mockReturnValue(['npcs/goblin.yaml']);
+            (fs.statSync as jest.Mock).mockReturnValue({ isDirectory: () => false });
+            (fs.existsSync as jest.Mock).mockReturnValue(true);
+
+            const goblinContent = `
+tokens:
+  - id: 100
+    name: Goblin
+    stats:
+       hp: 7
+`;
+            (fs.readFileSync as jest.Mock).mockImplementation((path: string) => {
+                if (path.endsWith('npcs/goblin.yaml')) return goblinContent;
+                return '';
+            });
+
+            // Load campaign to populate tokenSourceMap
+            cm.loadCampaign();
+
+            (fs.readFileSync as jest.Mock).mockClear();
+            (fs.writeFileSync as jest.Mock).mockClear();
+
+            // Mock read for the addToken operation (re-reading the file to append)
+            (fs.readFileSync as jest.Mock).mockReturnValue(goblinContent);
+
+            // Action: Add token based on Goblin blueprint (id 100)
+            const newToken = cm.addToken(100, 1, 10, 10);
+
+            // Assertions
+            expect(newToken).toBeDefined();
+            expect(newToken?.name).toBe('Goblin');
+
+            // Should write to npcs/goblin.yaml
+            expect(fs.writeFileSync).toHaveBeenCalled();
+            const [filePath, content] = (fs.writeFileSync as jest.Mock).mock.calls[0];
+
+            expect(filePath).toContain('npcs/goblin.yaml');
+            // Content should have 2 tokens now (blueprint + new instance)
+            expect(content).toContain('id: 100'); // original
+            expect(content).toContain(`id: ${newToken?.id}`); // new one
+        });
+
+        it('should fall back to campaign.yaml if blueprint source undefined (edge case)', () => {
+            // Setup: Load campaign normally
+            (fs.readdirSync as jest.Mock).mockReturnValue(['campaign.yaml']);
+            (fs.statSync as jest.Mock).mockReturnValue({ isDirectory: () => false });
+            (fs.existsSync as jest.Mock).mockReturnValue(true);
+
+            const campaignContent = `
+tokens:
+  - id: 1
+    name: Hero
+    stats:
+        hp: 10
+`;
+            (fs.readFileSync as jest.Mock).mockReturnValue(campaignContent);
+            cm.loadCampaign();
+
+            // Force fallback by removing from source map
+            (cm as any).tokenSourceMap.delete(1);
+
+            (fs.readFileSync as jest.Mock).mockClear();
+            (fs.writeFileSync as jest.Mock).mockClear();
+            (fs.readFileSync as jest.Mock).mockReturnValue(campaignContent);
+
+            const res = cm.addToken(1, 1, 0, 0);
+
+            // Check if it added successfully
+            expect(res).not.toBeNull();
+
+            expect(fs.writeFileSync).toHaveBeenCalled();
+            const [filePath] = (fs.writeFileSync as jest.Mock).mock.calls[0];
+            expect(filePath).toContain('campaign.yaml');
+        });
+    });
+
     describe('Loop Prevention', () => {
         it('should suppress callback if loaded content matches in-memory state (Optimistic Update)', () => {
             const mockWatcher = { on: jest.fn(), close: jest.fn() };

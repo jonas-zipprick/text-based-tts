@@ -177,29 +177,83 @@ export class CampaignManager {
         // NPCs are typically not controlled by anyone initially
         newToken.controlled_by = [];
 
-        // Persist to campaign.yaml
-        const filePath = path.join(this.campaignDir, 'campaign.yaml');
+        // Determine target file
+        // Default to campaign.yaml if source not found
+        let targetFile = this.tokenSourceMap.get(blueprintId);
+        if (!targetFile) {
+            targetFile = path.join(this.campaignDir, 'campaign.yaml');
+        }
+
         try {
             let doc;
-            if (fs.existsSync(filePath)) {
-                const content = fs.readFileSync(filePath, 'utf8');
+            if (fs.existsSync(targetFile)) {
+                const content = fs.readFileSync(targetFile, 'utf8');
                 doc = parseDocument(content);
             } else {
-                doc = parseDocument('name: New Campaign\nactiveMapId: 0\n');
+                // specific case where file might not exist yet? unlikely for source map
+                doc = parseDocument('tokens: []\n');
             }
 
-            if (!doc.has('tokens')) {
-                doc.set('tokens', new YAMLSeq());
+            // Handle different root structures (array vs object with tokens key)
+            // Ideally we check how the file is structured. 
+            // Most valid NPC files have a root object or array. 
+            // If it's an array root, we just add to it?
+            // BUT parser typically expects an object for named fields like 'tokens'.
+            // If the file root IS an array (like some older files?), we can't easily add a 'tokens' key.
+            // Let's assume standard structure: root object with 'tokens' key, OR array of tokens.
+
+            // Re-read structure logic from loadCampaign? 
+            // loadCampaign just does `yaml.load`.
+
+            // `parseDocument` gives us a CST/AST.
+
+            if (doc.contents && isCollection(doc.contents) && (doc.contents as any).items) {
+                // It's a collection (Seq or Map)
+            } else {
+                // Empty or scalar
             }
-            const tokensSeq = doc.get('tokens') as YAMLSeq;
-            tokensSeq.add(newToken);
 
-            fs.writeFileSync(filePath, doc.toString());
+            // We need to be careful. If the file is a LIST of tokens (Array root), we add to that list.
+            // If the file is an OBJECT with a `tokens` key, we add to that list.
 
-            // Update in-memory source map
-            this.tokenSourceMap.set(newId, filePath);
+            // Detection:
+            let tokensSeq: YAMLSeq<any> | null = null;
 
-            return newToken;
+            if (doc.contents instanceof YAMLSeq) {
+                tokensSeq = doc.contents;
+            } else if (doc.contents instanceof YAMLMap) {
+                if (!doc.has('tokens')) {
+                    doc.set('tokens', new YAMLSeq());
+                }
+                tokensSeq = doc.get('tokens') as YAMLSeq;
+            } else {
+                // Fallback for empty file or weird state
+                // If it was parsed as null/empty, we can initialize it?
+                // But `doc.contents` might be null.
+                if (!doc.contents) {
+                    // Assume object structure default
+                    doc.contents = new YAMLMap() as any;
+                    doc.set('tokens', new YAMLSeq());
+                    tokensSeq = doc.get('tokens') as YAMLSeq;
+                } else {
+                    console.error(`Unknown YAML structure in ${targetFile}`);
+                    return null;
+                }
+            }
+
+            if (tokensSeq) {
+                tokensSeq.add(newToken);
+                fs.writeFileSync(targetFile, doc.toString());
+
+                // Update in-memory source map
+                this.tokenSourceMap.set(newId, targetFile);
+                this.currentCampaign?.tokens.push(newToken);
+
+                return newToken;
+            } else {
+                return null;
+            }
+
         } catch (e) {
             console.error('Error adding token:', e);
             return null;
