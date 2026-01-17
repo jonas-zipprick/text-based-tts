@@ -426,6 +426,12 @@
                                     "description"
                                 ]
                             }
+                        },
+                        "spells": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Spell"
+                            }
                         }
                     },
                     "required": [
@@ -443,6 +449,111 @@
                 "controlled_by",
                 "visibility",
                 "stats"
+            ]
+        },
+        "Spell": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9
+                },
+                "school": {
+                    "type": "string"
+                },
+                "casting_time": {
+                    "type": "string"
+                },
+                "range": {
+                    "type": "string"
+                },
+                "components": {
+                    "type": "object",
+                    "properties": {
+                        "verbal": {
+                            "type": "boolean"
+                        },
+                        "somatic": {
+                            "type": "boolean"
+                        },
+                        "material": {
+                            "type": "boolean"
+                        },
+                        "material_cost": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "verbal",
+                        "somatic",
+                        "material"
+                    ]
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "concentration": {
+                    "type": "boolean"
+                },
+                "ritual": {
+                    "type": "boolean"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "higher_levels": {
+                    "type": "string"
+                },
+                "attack_bonus": {
+                    "type": "string"
+                },
+                "save": {
+                    "type": "object",
+                    "properties": {
+                        "ability": {
+                            "type": "string",
+                            "enum": [
+                                "str",
+                                "dex",
+                                "con",
+                                "int",
+                                "wis",
+                                "cha"
+                            ]
+                        },
+                        "dc": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "ability"
+                    ]
+                },
+                "damage": {
+                    "type": "object",
+                    "properties": {
+                        "dice": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "level",
+                "school",
+                "casting_time",
+                "range",
+                "components",
+                "duration",
+                "description"
             ]
         }
     }

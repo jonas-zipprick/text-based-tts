@@ -56,6 +56,34 @@ export type TokenTrait = {
     description: string;
 };
 
+export type Spell = {
+    name: string;
+    level: number;
+    school: string;
+    casting_time: string;
+    range: string;
+    components: {
+        verbal: boolean;
+        somatic: boolean;
+        material: boolean;
+        material_cost?: string;
+    };
+    duration: string;
+    concentration?: boolean;
+    ritual?: boolean;
+    description: string;
+    higher_levels?: string;
+    attack_bonus?: string | number;
+    save?: {
+        ability: 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+        dc?: number;
+    };
+    damage?: {
+        dice: string;
+        type: string;
+    };
+};
+
 export type TokenStats = {
     ac: number;
     acType?: string; // e.g., "natural armor"
@@ -76,6 +104,7 @@ export type TokenStats = {
     traits?: TokenTrait[];
     actions?: TokenAction[];
     legendaryActions?: TokenAction[];
+    spells?: Spell[];
 };
 
 export type TokenVisibility = {
