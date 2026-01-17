@@ -904,58 +904,56 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         </>
                     )}
 
-                    {/* Spell Slots */}
-                    {localToken.stats.spells && localToken.stats.spells.length > 0 && (
-                        <div className="cs-spell-slots-section">
-                            <h3 className="cs-section-subtitle">Spell Slots</h3>
-                            <div className="cs-slots-grid">
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
-                                    const slots = localToken.stats.spellSlots?.[level.toString()] || { max: 0, used: 0 };
-                                    // Only show if max > 0, or if we want to allow editing?
-                                    // Let's show all for now so they can be edited.
-                                    // Or maybe just show 1-5 by default?
-                                    return (
-                                        <div key={level} className="cs-slot-row">
-                                            <span className="cs-slot-label">Lvl {level}</span>
-                                            <div className="cs-slot-tracker">
-                                                {/* Squares for max slots */}
-                                                {Array.from({ length: Math.max(slots.max, 4) }).map((_, i) => {
-                                                    if (i < slots.max) {
-                                                        return (
-                                                            <input
-                                                                key={i}
-                                                                type="checkbox"
-                                                                className="cs-slot-checkbox"
-                                                                checked={i < slots.used}
-                                                                onChange={() => {
-                                                                    const newUsed = i < slots.used ? i : i + 1;
-                                                                    updateField(`stats.spellSlots.${level}.used`, newUsed);
-                                                                }}
-                                                            />
-                                                        );
-                                                    }
-                                                    return null;
-                                                })}
-                                                {/* Edit Max */}
-                                                <input
-                                                    type="number"
-                                                    className="cs-slot-max-input"
-                                                    value={slots.max}
-                                                    onChange={e => updateField(`stats.spellSlots.${level}.max`, parseInt(e.target.value) || 0)}
-                                                    title="Max Slots"
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Spells */}
                     {localToken.stats.spells && localToken.stats.spells.length > 0 && (
                         <>
                             <h2 className="cs-section-title">Spells</h2>
+
+                            {/* Spell Slots */}
+                            <div className="cs-spell-slots-section">
+                                <h3 className="cs-section-subtitle">Spell Slots</h3>
+                                <div className="cs-slots-grid">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
+                                        const slots = localToken.stats.spellSlots?.[level.toString()] || { max: 0, used: 0 };
+                                        // Only show if max > 0, or if we want to allow editing?
+                                        // Let's show all for now so they can be edited.
+                                        // Or maybe just show 1-5 by default?
+                                        return (
+                                            <div key={level} className="cs-slot-row">
+                                                <span className="cs-slot-label">Lvl {level}</span>
+                                                <div className="cs-slot-tracker">
+                                                    {/* Squares for max slots */}
+                                                    {Array.from({ length: Math.max(slots.max, 4) }).map((_, i) => {
+                                                        if (i < slots.max) {
+                                                            return (
+                                                                <input
+                                                                    key={i}
+                                                                    type="checkbox"
+                                                                    className="cs-slot-checkbox"
+                                                                    checked={i < slots.used}
+                                                                    onChange={() => {
+                                                                        const newUsed = i < slots.used ? i : i + 1;
+                                                                        updateField(`stats.spellSlots.${level}.used`, newUsed);
+                                                                    }}
+                                                                />
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })}
+                                                    {/* Edit Max */}
+                                                    <input
+                                                        type="number"
+                                                        className="cs-slot-max-input"
+                                                        value={slots.max}
+                                                        onChange={e => updateField(`stats.spellSlots.${level}.max`, parseInt(e.target.value) || 0)}
+                                                        title="Max Slots"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                             {localToken.stats.spells.map((spell, index) => {
                                 const levelText = spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`;
 
