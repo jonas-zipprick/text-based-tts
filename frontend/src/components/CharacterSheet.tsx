@@ -4,11 +4,15 @@ import toast from 'react-hot-toast';
 import { ToastNotification } from './ToastNotification';
 import './CharacterSheet.css';
 
+/* Controlled By Section */
+
+
 interface CharacterSheetProps {
     token: Token;
     onClose: () => void;
     onUpdate: (tokenId: number, updates: Partial<Token>) => void;
     onRoll?: (data: RollEvent) => void;
+    isGM?: boolean;
 }
 
 
@@ -91,10 +95,11 @@ const AutoExpandingInput: React.FC<AutoExpandingInputProps> = ({ className = '',
     );
 };
 
-export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, onUpdate, onRoll }) => {
+export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, onUpdate, onRoll, isGM }) => {
     // Local state for editing
     const [localToken, setLocalToken] = useState<Token>(token);
     const [hpInput, setHpInput] = useState('');
+    const [newSessionId, setNewSessionId] = useState('');
     // Track when we're waiting for our own save to complete
     const pendingSaveRef = useRef<string | null>(null);
 
@@ -121,7 +126,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             pendingSaveRef.current = debouncedJson;
 
             // Strip position and other non-editable fields to prevent overwriting updates
-            const { position, controlled_by, ...updates } = debouncedToken;
+            const { position, ...updates } = debouncedToken;
             onUpdate(debouncedToken.id, updates);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,6 +180,26 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             return updated;
         });
     }, []);
+
+    const handleAddSessionId = () => {
+        if (!newSessionId.trim()) return;
+        const currentControllers = localToken.controlled_by || [];
+        if (currentControllers.some(c => c.sessionId === newSessionId)) {
+            setNewSessionId('');
+            return;
+        }
+
+        const newControllers = [...currentControllers, { sessionId: newSessionId.trim() }];
+        // Directly update local token AND trigger update
+        updateField('controlled_by', newControllers);
+        setNewSessionId('');
+    };
+
+    const handleRemoveSessionId = (sid: string) => {
+        const currentControllers = localToken.controlled_by || [];
+        const newControllers = currentControllers.filter(c => c.sessionId !== sid);
+        updateField('controlled_by', newControllers);
+    };
 
     // Handle HP input with relative values
     const handleHpSubmit = () => {
@@ -374,6 +399,32 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 </>
                             )}
                         </div>
+                        {isGM && (
+                            <div className="cs-controlled-by">
+                                <span className="cs-label-small">Controlled by: </span>
+                                {localToken.controlled_by?.map((c, i) => (
+                                    <span key={i} className="cs-controller-tag">
+                                        {c.sessionId}
+                                        <button
+                                            className="cs-remove-controller"
+                                            onClick={() => handleRemoveSessionId(c.sessionId)}
+                                            title="Remove Controller"
+                                        >×</button>
+                                    </span>
+                                ))}
+                                <div className="cs-add-controller">
+                                    <input
+                                        type="text"
+                                        value={newSessionId}
+                                        onChange={e => setNewSessionId(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleAddSessionId()}
+                                        placeholder="Session ID"
+                                        className="cs-input-small"
+                                    />
+                                    <button onClick={handleAddSessionId} className="cs-btn-small" title="Add Session ID">+</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="cs-divider" />

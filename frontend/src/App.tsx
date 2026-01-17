@@ -196,6 +196,7 @@ function App() {
           onClose={() => setSelectedToken(null)}
           onUpdate={handleTokenStatsUpdate}
           onRoll={handleRoll}
+          isGM={view === 'dm' || view === 'editor'}
         />
       )}
       {view === 'player' && !hasControlledTokens && (
