@@ -13,12 +13,11 @@ But this project is more reduced to the essentials and all the game definition i
 - **Campaign Validation**: Includes a [YAML schema](file:///home/jonas/projects/pnp-board/campaign-schema.json) for autocompletion and error checking in your IDE.
 
 ## Non-Features
-- Voice chat
-- Text Chate
+- Voice Chat
+- Text Chat
 - Disabling Dynamic Lighting (always enabled)
 - Disabling Fog of War (always enabled)
 - Plugins
-- Rolling Virtual Dice
 - Restricting controll of tokens to certain players
 
 ## Getting Started
@@ -74,7 +73,7 @@ maps:
   - picture: "pictures/maps/village.jpg"
     size: fullscreen
   walls:
-  # Map boundaries (prevents tokens from leaving the map)
+  # Map boundaries (prevents tokens from seing beyond the map)
   - start: {x: 0, y: 0}
     end: {x: 900, y: 0}
   - start: {x: 900, y: 0}
@@ -96,7 +95,7 @@ Create player files in `campaign/entities/players/`. Players need a `sessionId` 
 
 ```yaml
 tokens:
-  - id: 10001                    # Unique ID (use 10000+ for players)
+  - id: 10001                    # Unique ID (recomendation: use 10000+ for players)
     name: "Hero"
     picture: pictures/tokens/hero.png
     controlled_by:
@@ -143,7 +142,7 @@ Create NPC files in `campaign/entities/npcs/`. NPCs have `controlled_by: []` so 
 
 ```yaml
 tokens:
-  - id: 20001                    # Unique ID (use 20000+ for NPCs)
+  - id: 20001                    # Unique ID (recomendation: use 20000+ for NPCs)
     name: "Friendly Villager"
     picture: "pictures/tokens/villager.png"
     controlled_by: []            # Empty = GM only
@@ -194,7 +193,7 @@ Place your images in the `campaign/assets/pictures/` folder:
 
 2. **Start the development server:**
    ```bash
-   cd frontend && npm run dev
+   npm run dev
    ```
 
 3. **Open the application** in your browser at `http://localhost:5174/`
