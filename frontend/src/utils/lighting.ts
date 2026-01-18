@@ -1,5 +1,5 @@
 import type { Point, Wall } from '../../../shared';
-import polygonClipping from 'polygon-clipping';
+import polygonClipping, { type MultiPolygon, type Ring } from 'polygon-clipping';
 
 export type Segment = { a: Point; b: Point };
 
@@ -104,7 +104,7 @@ export function pointsToPoly(points: Point[]): Poly {
     return poly;
 }
 
-export function polyToPoints(poly: Poly): Point[] {
+export function polyToPoints(poly: Poly | Ring): Point[] {
     const points = poly.map(p => ({ x: p[0], y: p[1] }));
     if (points.length > 1) {
         const first = points[0];
@@ -137,7 +137,7 @@ export function unionPolygons(polys: Point[][]): Point[][] {
         // Then spread them: union(...multiPolys)
         const multiPolys = rings.map(ring => [[ring]]); // [ MultiPolygon, MultiPolygon, ... ]
 
-        const result = polygonClipping.union(...multiPolys as any);
+        const result = polygonClipping.union(...(multiPolys as [MultiPolygon, ...MultiPolygon[]]));
         // Result: MultiPolygon = [ [OuterRing, Hole...], ... ]
         // Flatten to just outer rings
         return result.map(poly => polyToPoints(poly[0]));
@@ -158,12 +158,12 @@ export function intersectPolygons(poly1: Point[], poly2: Point[][]): Point[][] {
 
         // Union all light polygons first
         const lightMultiPolys = p2Rings.map(ring => [[ring]]);
-        const lightsUnion = polygonClipping.union(...lightMultiPolys as any);
+        const lightsUnion = polygonClipping.union(...(lightMultiPolys as [MultiPolygon, ...MultiPolygon[]]));
 
         // Intersect LoS polygon with union of lights
         // LoS is a single polygon: [[p1Ring]]
-        const losMultiPoly = [[p1Ring]];
-        const result = polygonClipping.intersection(losMultiPoly as any, lightsUnion);
+        const losMultiPoly: MultiPolygon = [[p1Ring as Ring]];
+        const result = polygonClipping.intersection(losMultiPoly, lightsUnion) as unknown as MultiPolygon;
 
         return result.map(poly => polyToPoints(poly[0]));
     } catch (e) {

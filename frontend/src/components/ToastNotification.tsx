@@ -1,9 +1,9 @@
 import React from 'react';
-import { toast } from 'react-hot-toast';
+import { toast, type Toast } from 'react-hot-toast';
 import type { RollEvent } from '../../../shared';
 import './CharacterSheet.css'; // Ensure styles are available
 
-export const ToastNotification: React.FC<{ data: RollEvent; t: any }> = ({ data, t }) => {
+export const ToastNotification: React.FC<{ data: RollEvent; t: Toast }> = ({ data, t }) => {
     return (
         <div
             className={`cs-toast ${data.attack?.type || 'info'}`}

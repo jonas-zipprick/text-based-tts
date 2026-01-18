@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
+import { toast, type Toast } from 'react-hot-toast';
 import yaml from 'js-yaml';
 import type { Light } from '../../../shared';
 
 interface LightClipboardToastProps {
     lights: Light[];
-    t: any; // Toast object provided by react-hot-toast
+    t: Toast;
     onClose: () => void;
     onSave?: (lights: Light[]) => void;
 }
@@ -35,7 +35,7 @@ export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights
     const handleSave = () => {
         if (!onSave) return;
         try {
-            const parsed = yaml.load(editedText) as any[];
+            const parsed = yaml.load(editedText) as Array<{ x: unknown; y: unknown; radius: unknown; color?: string }>;
             if (!Array.isArray(parsed)) {
                 throw new Error("Invalid format: Must be a list starting with '-'");
             }
@@ -58,8 +58,9 @@ export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights
             });
 
             onSave(validatedLights);
-        } catch (e: any) {
-            toast.error(`YAML Error: ${e.message}`, { id: 'yaml-error' });
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            toast.error(`YAML Error: ${message}`, { id: 'yaml-error' });
         }
     };
 

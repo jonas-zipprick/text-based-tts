@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text, Path } from 'react-konva';
+import type Konva from 'konva';
 import { toast } from 'react-hot-toast';
 import { WallClipboardToast } from './WallClipboardToast';
 import { LightClipboardToast } from './LightClipboardToast';
@@ -67,7 +68,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
 
     const [isHovered, setIsHovered] = useState(false);
 
-    const handleDragEndInternal = (e: any) => {
+    const handleDragEndInternal = (e: Konva.KonvaEventObject<DragEvent>) => {
         const newX = Math.round(e.target.x() / gridSize);
         const newY = Math.round(e.target.y() / gridSize);
         onMove(token.id, newX, newY);
@@ -82,7 +83,7 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
         if (onDragEnd) onDragEnd();
     };
 
-    const handleDragStartInternal = (e: any) => {
+    const handleDragStartInternal = (e: Konva.KonvaEventObject<DragEvent>) => {
         if (onDragStart) {
             const gridX = Math.round(e.target.x() / gridSize);
             const gridY = Math.round(e.target.y() / gridSize);
@@ -327,7 +328,7 @@ export const GameBoard = (props: GameBoardProps) => {
     const [hoveredTokenId, setHoveredTokenId] = useState<number | null>(null);
     const [quickHpValue, setQuickHpValue] = useState('');
     const [quickHpPos, setQuickHpPos] = useState<{ x: number, y: number } | null>(null);
-    const quickHpTimerRef = useRef<any>(null);
+    const quickHpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Alternatively, use window.setTimeout type: const quickHpTimerRef = useRef<number | null>(null);
 
     const applyQuickHp = useCallback(() => {
@@ -422,11 +423,13 @@ export const GameBoard = (props: GameBoardProps) => {
     // const [stageScale, setStageScale] = useState<number>(1);
     // const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
-    const handleWheel = (e: any) => {
+    const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
         const stage = e.target.getStage();
+        if (!stage) return;
         const oldScale = stage.scaleX();
         const pointer = stage.getPointerPosition();
+        if (!pointer) return;
 
         const scaleBy = 1.1;
         const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
@@ -445,8 +448,9 @@ export const GameBoard = (props: GameBoardProps) => {
         setStagePos(newPos);
     };
 
-    const handleMouseMove = (e: any) => {
+    const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
         const stage = e.target.getStage();
+        if (!stage) return;
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
 
@@ -484,10 +488,10 @@ export const GameBoard = (props: GameBoardProps) => {
         return Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
     };
 
-    const handleStageClick = (e: any) => {
+    const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
         if (!isGM || activeTool === 'select') return;
         const stage = e.target.getStage();
-        if (stage.isDragging()) return;
+        if (!stage || stage.isDragging()) return;
 
         const pointer = stage.getPointerPosition();
         if (!pointer) return;

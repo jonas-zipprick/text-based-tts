@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 
-import type { Token, RollEvent } from '../../../shared';
+import type { Token, RollEvent, TokenAttack, Spell } from '../../../shared';
 
-import {AutoExpandingInput} from './AutoExpandingInput';
-import {ToastNotification} from './ToastNotification';
-import {getAttrModifier, getProficiencyBonus} from '../utils/dndGameLogic.ts';
-import {useDebounce} from '../utils/react.ts';
+import { AutoExpandingInput } from './AutoExpandingInput';
+import { ToastNotification } from './ToastNotification';
+import { getAttrModifier, getProficiencyBonus } from '../utils/dndGameLogic.ts';
+import { useDebounce } from '../utils/react.ts';
 
 import './CharacterSheet.css';
 
@@ -91,19 +91,19 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
 
     // Update handlers
-    const updateField = useCallback((path: string, value: any) => {
+    const updateField = useCallback((path: string, value: unknown) => {
         setLocalToken(prev => {
             const updated = { ...prev };
             const parts = path.split('.');
-            let obj: any = updated;
+            let obj: Record<string, unknown> = updated;
             for (let i = 0; i < parts.length - 1; i++) {
                 const part = parts[i];
                 if (obj[part] === undefined) {
                     obj[part] = {};
                 }
                 // Correctly clone array or object
-                obj[part] = Array.isArray(obj[part]) ? [...obj[part]] : { ...obj[part] };
-                obj = obj[part];
+                obj[part] = Array.isArray(obj[part]) ? [...obj[part] as unknown[]] : { ...(obj[part] as Record<string, unknown>) };
+                obj = obj[part] as Record<string, unknown>;
             }
             obj[parts[parts.length - 1]] = value;
             return updated;
@@ -198,7 +198,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         return null;
     };
 
-    const handleActionClick = (action: any) => {
+    const handleActionClick = (action: TokenAttack) => {
         if (action.modifiers?.attack !== undefined || action.ability !== undefined) {
             // Attack Roll
             const d20 = Math.floor(Math.random() * 20) + 1;
@@ -249,7 +249,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
             // Extra Damage
             if (action.extraDamage) {
-                action.extraDamage.forEach((extra: any) => {
+                action.extraDamage.forEach((extra) => {
                     const dr = parseDice(extra.hit);
                     if (dr) {
                         damageResults.push({
@@ -283,7 +283,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
 
 
-    const handleSpellClick = (spell: any) => {
+    const handleSpellClick = (spell: Spell) => {
         // Spell Slot Logic
         if (spell.level > 0 && localToken.stats.spellSlots) {
             const slotLevel = spell.level.toString();
@@ -320,7 +320,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             }
         }
 
-        let attackData = undefined;
+        let attackData: RollEvent['attack'] = undefined;
         let breakdownParts: string[] = [];
 
         // Attack Roll
@@ -330,18 +330,19 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             // Try parsing attack bonus as number or dice formula? usually just a number string in APIs
             // If string "8" -> 8. If "1d4+2" -> well, 5e usually represents spell attacks as flat modifiers.
             // Schema says string, but let's try strict parse.
-            let mod = parseInt(spell.attack_bonus);
+            let mod = parseInt(String(spell.attack_bonus), 10);
             if (isNaN(mod)) mod = 0; // Fallback
 
             const total = d20 + mod;
             breakdownParts.push(`${mod >= 0 ? '+' : ''}${mod}`);
 
+            const attackType: 'crit' | 'fail' | 'normal' = d20 === 20 ? 'crit' : (d20 === 1 ? 'fail' : 'normal');
             attackData = {
                 total,
                 d20,
                 mod,
                 sign: mod >= 0 ? '+' : '',
-                type: d20 === 20 ? 'crit' : (d20 === 1 ? 'fail' : 'normal') as any, // Cast to match type
+                type: attackType,
                 breakdown: `${d20} ${breakdownParts.join(' ')}`
             };
         }
@@ -694,9 +695,9 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 onChange={e => updateField(`stats.attacks.${index}.description`, e.target.value)}
                                                 placeholder="Action description..."
                                                 rows={1}
-                                                onInput={(e: any) => {
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                                                    (e.target as HTMLTextAreaElement).style.height = 'auto';
+                                                    (e.target as HTMLTextAreaElement).style.height = (e.target as HTMLTextAreaElement).scrollHeight + 'px';
                                                 }}
                                             />
                                             {isWeapon && (
@@ -808,7 +809,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 />
                                                 <span> damage.</span>
                                             </div>
-                                            {action.extraDamage && action.extraDamage.map((extra: any, eIdx: number) => (
+                                            {action.extraDamage && action.extraDamage.map((extra, eIdx) => (
                                                 <div className="cs-action-hit-row" key={eIdx}>
                                                     <span>plus </span>
                                                     <AutoExpandingInput
@@ -943,9 +944,9 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 onChange={e => updateField(`stats.spells.${index}.description`, e.target.value)}
                                                 placeholder="Spell description..."
                                                 rows={1}
-                                                onInput={(e: any) => {
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                                                    (e.target as HTMLTextAreaElement).style.height = 'auto';
+                                                    (e.target as HTMLTextAreaElement).style.height = (e.target as HTMLTextAreaElement).scrollHeight + 'px';
                                                 }}
                                             />
 
@@ -1045,9 +1046,9 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 onChange={e => updateField(`stats.attacks.${index}.description`, e.target.value)}
                                                 placeholder="Action description..."
                                                 rows={1}
-                                                onInput={(e: any) => {
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                onInput={(e: React.FormEvent<HTMLTextAreaElement>) => {
+                                                    (e.target as HTMLTextAreaElement).style.height = 'auto';
+                                                    (e.target as HTMLTextAreaElement).style.height = (e.target as HTMLTextAreaElement).scrollHeight + 'px';
                                                 }}
                                             />
                                             {(action.modifiers?.attack !== undefined || action.ability !== undefined) && (
@@ -1117,7 +1118,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <span> damage.</span>
                                                 </div>
                                             )}
-                                            {action.extraDamage && action.extraDamage.map((extra: any, eIdx: number) => (
+                                            {action.extraDamage && action.extraDamage.map((extra, eIdx) => (
                                                 <div className="cs-action-hit-row" key={eIdx}>
                                                     <span>plus </span>
                                                     <AutoExpandingInput
