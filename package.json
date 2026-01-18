@@ -2,6 +2,7 @@
   "name": "pnp-board",
   "version": "1.0.0",
   "private": false,
+  "type": "module",
   "engines": {
     "node": "24.11.1"
   },
@@ -15,11 +16,19 @@
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:frontend\"",
     "test": "npm test --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "prepare": "husky"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "concurrently": "^8.0.0",
-    "husky": "^9.1.7"
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "typescript-eslint": "^8.46.4"
   },
   "dependencies": {
     "js-yaml": "^4.1.1"

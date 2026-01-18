@@ -104,7 +104,7 @@ export class CampaignManager {
             }) as YAMLMap;
 
             if (tokenItem) {
-                let positionSeq = tokenItem.get('position') as YAMLSeq;
+                const positionSeq = tokenItem.get('position') as YAMLSeq;
                 if (!positionSeq) return;
 
                 const mapPos = positionSeq.items.find((item: any) => {

@@ -317,7 +317,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         }
 
         let attackData: RollEvent['attack'] = undefined;
-        let breakdownParts: string[] = [];
+        const breakdownParts: string[] = [];
 
         // Attack Roll
         if (spell.attack_bonus) {
@@ -344,7 +344,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         }
 
         // Damage
-        let damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
+        const damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
         if (spell.damage && spell.damage.dice) {
             const dr = parseDice(spell.damage.dice);
             if (dr) {
