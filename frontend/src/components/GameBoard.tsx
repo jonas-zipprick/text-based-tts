@@ -503,8 +503,8 @@ export const GameBoard = (props: GameBoardProps) => {
 
         const pixelX = (pointer.x - stagePos.x) / stageScale;
         const pixelY = (pointer.y - stagePos.y) / stageScale;
-        const gridX = Math.round(pixelX / gridSize);
-        const gridY = Math.round(pixelY / gridSize);
+        const gridX = Math.floor(pixelX / gridSize);
+        const gridY = Math.floor(pixelY / gridSize);
         const clickPoint = { x: Math.round(pixelX), y: Math.round(pixelY) };
 
         if (activeTool === 'wall') {
