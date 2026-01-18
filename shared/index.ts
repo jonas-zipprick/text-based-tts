@@ -45,6 +45,7 @@ export type TokenAttack = {
     targets?: number;
     hit?: string;
     type?: string;
+    legendary?: boolean;
     extraDamage?: {
         hit: string;
         type: string;
@@ -103,7 +104,6 @@ export type TokenStats = {
     xp?: number;
     traits?: TokenTrait[];
     attacks?: TokenAttack[];
-    legendaryAttacks?: TokenAttack[];
     spells?: Spell[];
     spellSlots?: {
         [level: string]: {

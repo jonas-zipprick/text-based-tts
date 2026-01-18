@@ -402,28 +402,13 @@
                                                 "type"
                                             ]
                                         }
+                                    },
+                                    "legendary": {
+                                        "type": "boolean"
                                     }
                                 },
                                 "required": [
                                     "name"
-                                ]
-                            }
-                        },
-                        "legendaryActions": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "description": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "name",
-                                    "description"
                                 ]
                             }
                         },
