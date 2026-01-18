@@ -3,6 +3,6 @@
 - [ ] Make pannels like "Attacks and "Spells" collapsable
 - [ ] Better browser-icon 
 - [x] Enable typescript strict mode & eslint
-- [ ] Char sheet has scrollbars
-- [ ] Frontend tests
+- [x] Char sheet has scrollbars
+- [x] Frontend tests
 - [ ] Editing long autoexpandinginputs seems slow
