@@ -5,3 +5,4 @@
 - [x] Enable typescript strict mode & eslint
 - [ ] Char sheet has scrollbars
 - [ ] Frontend tests
+- [ ] Editing long autoexpandinginputs seems slow
