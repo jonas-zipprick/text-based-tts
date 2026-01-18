@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WallClipboardToast } from '../WallClipboardToast';
-import { toast } from 'react-hot-toast';
+import { toast, type Toast } from 'react-hot-toast';
 import type { Wall } from '../../../../shared';
 
 // Mock react-hot-toast
@@ -16,7 +16,7 @@ describe('WallClipboardToast Component', () => {
     const mockWalls: Wall[] = [
         { start: { x: 0, y: 0 }, end: { x: 100, y: 100 } }
     ];
-    const mockToast: any = { id: 't-1', visible: true };
+    const mockToast = { id: 't-1', visible: true } as Toast;
 
     it('should render initial walls in YAML format', () => {
         render(<WallClipboardToast walls={mockWalls} t={mockToast} onClose={vi.fn()} />);

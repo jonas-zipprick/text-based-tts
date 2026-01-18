@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ToastNotification } from '../ToastNotification';
-import { toast } from 'react-hot-toast';
+import { toast, type Toast } from 'react-hot-toast';
 import type { RollEvent } from '../../../../shared';
 
 // Mock react-hot-toast
@@ -12,10 +12,10 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 describe('ToastNotification Component', () => {
-    const mockToast: any = {
+    const mockToast = {
         id: 'toast-1',
         visible: true,
-    };
+    } as Toast;
 
     it('should render attack roll results correctly', () => {
         const data: RollEvent = {
