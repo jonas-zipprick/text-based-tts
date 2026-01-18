@@ -2,6 +2,6 @@
 - [ ] Allow for rolling saving throws
 - [ ] Make pannels like "Attacks and "Spells" collapsable
 - [ ] Better browser-icon 
-- [ ] Enable typescript strict mode
+- [x] Enable typescript strict mode
 - [ ] Char sheet has scrollbars
 - [ ] Frontend tests

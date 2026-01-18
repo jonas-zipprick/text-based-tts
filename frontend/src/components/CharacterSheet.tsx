@@ -32,7 +32,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
     // Track when we're waiting for our own save to complete
     const pendingSaveRef = useRef<string | null>(null);
 
-    // Debounced token for auto-save
     const debouncedToken = useDebounce(localToken, 300);
 
     // Sync with external token updates (but not our own saves echoing back)
@@ -88,9 +87,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
         return () => clearTimeout(timer);
     }, [autoResizeAll, localToken.stats.attacks]);
 
-
-
-    // Update handlers
     const updateField = useCallback((path: string, value: unknown) => {
         setLocalToken(prev => {
             const updated = { ...prev };
@@ -204,7 +200,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             const d20 = Math.floor(Math.random() * 20) + 1;
 
             let attackMod = 0;
-            let breakdownParts: string[] = [];
+            const breakdownParts: string[] = [];
 
             if (action.ability) {
                 const attrMod = getAttrModifier(attrs[action.ability] || 10);
@@ -232,7 +228,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             const breakdown = `${d20} ${breakdownParts.join(' ')}`;
 
             // Initial roll results
-            let damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
+            const damageResults: { total: number; type?: string; formula?: string; resultText?: string }[] = [];
 
             // Primary Damage
             if (action.hit) {
