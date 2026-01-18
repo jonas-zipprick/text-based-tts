@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import { CampaignManager } from './campaignManager';
+import { Token, Wall, Light } from '../../shared';
 
 const app = express();
 const httpServer = createServer(app);
@@ -24,7 +25,7 @@ app.use('/assets', express.static(path.join(__dirname, '../../campaign/assets'))
 // Initialize Campaign Manager
 const campaignDir = path.join(__dirname, '../../campaign'); // Go up to root/campaign
 const campaignManager = new CampaignManager(campaignDir);
-const campaign = campaignManager.loadCampaign();
+campaignManager.loadCampaign();
 
 // Watch for changes
 campaignManager.watch((updatedCampaign) => {
@@ -66,7 +67,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('token-update-stats', (data: { tokenId: number, updates: Record<string, any> }) => {
+    socket.on('token-update-stats', (data: { tokenId: number, updates: Record<string, unknown> }) => {
         const campaign = campaignManager.getCampaign();
         if (campaign) {
             const token = campaign.tokens.find(t => t.id === data.tokenId);
@@ -97,17 +98,17 @@ io.on('connection', (socket) => {
             campaignManager.setActiveMapId(data.newMapId);
 
             // Move all player-controlled tokens to the new map
-            campaign.tokens.forEach((token: any) => {
+            campaign.tokens.forEach((token: Token) => {
                 if (token.controlled_by && token.controlled_by.length > 0) {
                     // Find existing position on new map or create one
                     if (!token.position) token.position = [];
-                    const existingPos = token.position.find((p: any) => p.map === data.newMapId);
+                    const existingPos = token.position.find((p: { map: number }) => p.map === data.newMapId);
                     if (!existingPos) {
                         // Add a default position on the new map (center-ish)
                         token.position.push({ map: data.newMapId, x: 10, y: 10 });
                     }
                     // Persist the position update
-                    const pos = token.position.find((p: any) => p.map === data.newMapId)!;
+                    const pos = token.position.find((p: { map: number }) => p.map === data.newMapId)!;
                     campaignManager.updateTokenPosition(token.id, data.newMapId, pos.x, pos.y);
                 }
             });
@@ -117,23 +118,23 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('roll', (data: any) => {
+    socket.on('roll', (data: unknown) => {
         socket.broadcast.emit('roll', data);
     });
 
-    socket.on('add-walls', (data: { mapId: number, walls: any[] }) => {
+    socket.on('add-walls', (data: { mapId: number, walls: Wall[] }) => {
         campaignManager.addWalls(data.mapId, data.walls);
     });
 
-    socket.on('add-lights', ({ mapId, lights }: { mapId: number, lights: any[] }) => {
+    socket.on('add-lights', ({ mapId, lights }: { mapId: number, lights: Light[] }) => {
         campaignManager.addLights(mapId, lights);
     });
 
-    socket.on('remove-wall', ({ mapId, wall }: { mapId: number, wall: any }) => {
+    socket.on('remove-wall', ({ mapId, wall }: { mapId: number, wall: Wall }) => {
         campaignManager.removeWall(mapId, wall);
     });
 
-    socket.on('remove-light', ({ mapId, light }: { mapId: number, light: any }) => {
+    socket.on('remove-light', ({ mapId, light }: { mapId: number, light: Light }) => {
         campaignManager.removeLight(mapId, light);
     });
 

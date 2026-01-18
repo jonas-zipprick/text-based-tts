@@ -54,8 +54,9 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             pendingSaveRef.current = debouncedJson;
 
             // Strip position and other non-editable fields to prevent overwriting updates
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { position, ...updates } = debouncedToken;
-            onUpdate(debouncedToken.id, updates);
+            onUpdate(debouncedToken.id, updates as Partial<Token>);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debouncedToken, onUpdate]);

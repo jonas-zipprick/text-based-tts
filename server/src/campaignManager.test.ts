@@ -1,7 +1,6 @@
 import { CampaignManager } from './campaignManager';
 import fs from 'fs';
 import chokidar from 'chokidar';
-import path from 'path';
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -117,7 +116,7 @@ tokens: []
             // Pre-load to populate tokenSourceMap
             (fs.readdirSync as jest.Mock).mockReturnValue(['tokens.yaml']);
             (fs.statSync as jest.Mock).mockReturnValue({ isDirectory: () => false });
-            (fs.readFileSync as jest.Mock).mockImplementation((path) => {
+            (fs.readFileSync as jest.Mock).mockImplementation(() => {
                 // Return simple yaml with token 1
                 return 'tokens:\n  - id: 1\n    name: Hero\n    position: []\n    stats:\n      hp: 10\n      ac: 10\n      speed: 30\n      attributes: {}';
             });
@@ -228,7 +227,7 @@ tokens:
             cm.loadCampaign();
 
             // Force fallback by removing from source map
-            (cm as any).tokenSourceMap.delete(1);
+            (cm as unknown as { tokenSourceMap: Map<number, string> }).tokenSourceMap.delete(1);
 
             (fs.readFileSync as jest.Mock).mockClear();
             (fs.writeFileSync as jest.Mock).mockClear();

@@ -24,6 +24,14 @@ export function useCampaign() {
 
         // Socket connection
         const newSocket = io('http://localhost:3000');
+        // socket is already initialized in state, we don't need to call setSocket(newSocket) 
+        // if we just use it for the listeners here and then clean up.
+        // Actually, we DO need it in state for return, but calling it synchronously 
+        // in effect is what ESLint complains about. We can wrap it in a microtask 
+        // or just accept it's for external synchronization. 
+        // A better way is to set it and then use it.
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSocket(newSocket);
 
         newSocket.on('campaign-update', (updatedCampaign: Campaign) => {

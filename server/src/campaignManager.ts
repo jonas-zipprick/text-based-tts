@@ -35,7 +35,7 @@ export class CampaignManager {
         for (const file of files) {
             try {
                 const content = fs.readFileSync(file, 'utf8');
-                const data = yaml.load(content) as any;
+                const data = yaml.load(content) as Partial<Campaign>;
 
                 if (!data) continue;
 
@@ -98,8 +98,9 @@ export class CampaignManager {
             const tokens = doc.get('tokens') as YAMLSeq;
             if (!tokens) return;
 
-            const tokenItem = tokens.items.find((item: any) => {
-                const id = item.get ? item.get('id') : item.id;
+            const tokenItem = tokens.items.find((item: unknown) => {
+                const i = item as { get?: (s: string) => unknown, id?: number };
+                const id = i.get ? i.get('id') : i.id;
                 return id === tokenId;
             }) as YAMLMap;
 
@@ -107,8 +108,9 @@ export class CampaignManager {
                 const positionSeq = tokenItem.get('position') as YAMLSeq;
                 if (!positionSeq) return;
 
-                const mapPos = positionSeq.items.find((item: any) => {
-                    const m = item.get ? item.get('map') : item.map;
+                const mapPos = positionSeq.items.find((item: unknown) => {
+                    const i = item as { get?: (s: string) => unknown, map?: number };
+                    const m = i.get ? i.get('map') : i.map;
                     return m === mapId;
                 }) as YAMLMap;
 
@@ -125,7 +127,7 @@ export class CampaignManager {
         }
     }
 
-    public updateTokenStats(tokenId: number, updates: Record<string, any>) {
+    public updateTokenStats(tokenId: number, updates: Record<string, unknown>) {
         const filePath = this.tokenSourceMap.get(tokenId);
         if (!filePath) return;
 
@@ -135,18 +137,19 @@ export class CampaignManager {
             const tokens = doc.get('tokens') as YAMLSeq;
             if (!tokens) return;
 
-            const tokenItem = tokens.items.find((item: any) => {
-                const id = item.get ? item.get('id') : item.id;
+            const tokenItem = tokens.items.find((item: unknown) => {
+                const i = item as { get?: (s: string) => unknown, id?: number };
+                const id = i.get ? i.get('id') : i.id;
                 return id === tokenId;
             }) as YAMLMap;
 
             if (tokenItem) {
                 for (const [key, value] of Object.entries(updates)) {
                     if (key === 'id') continue;
-                    if (key === 'stats' && typeof value === 'object') {
+                    if (key === 'stats' && value && typeof value === 'object') {
                         const statsNode = tokenItem.get('stats') as YAMLMap;
                         if (statsNode && statsNode.set) {
-                            for (const [statKey, statValue] of Object.entries(value)) {
+                            for (const [statKey, statValue] of Object.entries(value as Record<string, unknown>)) {
                                 statsNode.set(statKey, statValue);
                             }
                         }
@@ -207,7 +210,7 @@ export class CampaignManager {
 
             // `parseDocument` gives us a CST/AST.
 
-            if (doc.contents && isCollection(doc.contents) && (doc.contents as any).items) {
+            if (doc.contents && isCollection(doc.contents) && (doc.contents as unknown as { items: unknown[] }).items) {
                 // It's a collection (Seq or Map)
             } else {
                 // Empty or scalar
@@ -217,7 +220,7 @@ export class CampaignManager {
             // If the file is an OBJECT with a `tokens` key, we add to that list.
 
             // Detection:
-            let tokensSeq: YAMLSeq<any> | null = null;
+            let tokensSeq: YAMLSeq<unknown> | null = null;
 
             if (doc.contents instanceof YAMLSeq) {
                 tokensSeq = doc.contents;
@@ -232,9 +235,10 @@ export class CampaignManager {
                 // But `doc.contents` might be null.
                 if (!doc.contents) {
                     // Assume object structure default
-                    doc.contents = new YAMLMap() as any;
-                    doc.set('tokens', new YAMLSeq());
-                    tokensSeq = doc.get('tokens') as YAMLSeq;
+                    const root = new YAMLMap() as unknown as YAMLMap<unknown, unknown>;
+                    doc.contents = root as unknown as (typeof doc.contents);
+                    root.set('tokens', new YAMLSeq());
+                    tokensSeq = root.get('tokens') as YAMLSeq;
                 } else {
                     console.error(`Unknown YAML structure in ${targetFile}`);
                     return null;
@@ -270,8 +274,9 @@ export class CampaignManager {
             const tokens = doc.get('tokens') as YAMLSeq;
             if (!tokens || !isCollection(tokens)) return;
 
-            const indexToRemove = tokens.items.findIndex((item: any) => {
-                const id = item.get ? item.get('id') : item.id;
+            const indexToRemove = tokens.items.findIndex((item: unknown) => {
+                const i = item as { get?: (s: string) => unknown, id?: number };
+                const id = i.get ? i.get('id') : i.id;
                 return id === tokenId;
             });
 
@@ -289,7 +294,7 @@ export class CampaignManager {
         if (this.watcher) this.watcher.close();
 
         this.watcher = chokidar.watch(this.campaignDir, {
-            ignored: /(^|[\/\\])\../,
+            ignored: /(^|[/\\])\../,
             persistent: true,
             ignoreInitial: true,
             awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 }
@@ -316,7 +321,7 @@ export class CampaignManager {
             const maps = doc.get('maps') as YAMLSeq;
             if (!maps) return;
 
-            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
             if (mapItem) {
                 if (!mapItem.has('walls')) mapItem.set('walls', new YAMLSeq());
                 const wallsSeq = mapItem.get('walls') as YAMLSeq;
@@ -349,7 +354,7 @@ export class CampaignManager {
             const maps = doc.get('maps') as YAMLSeq;
             if (!maps) return;
 
-            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
             if (mapItem) {
                 if (!mapItem.has('lights')) mapItem.set('lights', new YAMLSeq());
                 const lightsSeq = mapItem.get('lights') as YAMLSeq;
@@ -378,13 +383,13 @@ export class CampaignManager {
             const maps = doc.get('maps') as YAMLSeq;
             if (!maps) return;
 
-            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
             if (mapItem) {
                 const walls = mapItem.get('walls') as YAMLSeq;
                 if (!walls || !isCollection(walls)) return;
 
-                const indexToRemove = walls.items.findIndex((item: any) => {
-                    const w = item.toJSON() as Wall;
+                const indexToRemove = walls.items.findIndex((item: unknown) => {
+                    const w = (item as { toJSON: () => Wall }).toJSON();
                     return Math.abs(w.start.x - wallToRemove.start.x) < 0.1 &&
                         Math.abs(w.start.y - wallToRemove.start.y) < 0.1 &&
                         Math.abs(w.end.x - wallToRemove.end.x) < 0.1 &&
@@ -411,13 +416,13 @@ export class CampaignManager {
             const maps = doc.get('maps') as YAMLSeq;
             if (!maps) return;
 
-            const mapItem = maps.items.find((item: any) => (item.get ? item.get('id') : item.id) === mapId) as YAMLMap;
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
             if (mapItem) {
                 const lights = mapItem.get('lights') as YAMLSeq;
                 if (!lights || !isCollection(lights)) return;
 
-                const indexToRemove = lights.items.findIndex((item: any) => {
-                    const l = item.toJSON() as Light;
+                const indexToRemove = lights.items.findIndex((item: unknown) => {
+                    const l = (item as { toJSON: () => Light }).toJSON();
                     return Math.abs(l.x - lightToRemove.x) < 0.1 &&
                         Math.abs(l.y - lightToRemove.y) < 0.1;
                 });

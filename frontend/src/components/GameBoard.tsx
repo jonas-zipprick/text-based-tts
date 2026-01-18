@@ -56,17 +56,16 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
     onDoubleClick?: (token: Token) => void,
     onHover?: (tokenId: number | null) => void
 }) => {
+    const [isHovered, setIsHovered] = useState(false);
     const pos = token.position?.find(p => p.map === activeMapId);
-    if (!pos) return null;
-
     const imageUrl = token.picture ? `${URL_PREFIX}${token.picture}` : null;
     const [image] = useImage(imageUrl || '');
+
+    if (!pos) return null;
 
     const x = pos.x * gridSize;
     const y = pos.y * gridSize;
     const radius = gridSize / 2 * 0.8;
-
-    const [isHovered, setIsHovered] = useState(false);
 
     const handleDragEndInternal = (e: Konva.KonvaEventObject<DragEvent>) => {
         const newX = Math.round(e.target.x() / gridSize);
@@ -225,9 +224,8 @@ export const GameBoard = (props: GameBoardProps) => {
     } = props;
 
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
-    if (!activeMap) return <div className="text-white p-4">Map not found.</div>;
 
-    const gridSize = activeMap.grid.cellSize;
+    const gridSize = activeMap?.grid.cellSize ?? 50;
     const isGM = view === 'dm' || view === 'editor';
     const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
@@ -248,16 +246,16 @@ export const GameBoard = (props: GameBoardProps) => {
     }, []);
 
     // Compute dimensions
-    const mapWidth = activeMap.grid.width * gridSize;
-    const mapHeight = activeMap.grid.height * gridSize;
+    const mapWidth = (activeMap?.grid.width ?? 20) * gridSize;
+    const mapHeight = (activeMap?.grid.height ?? 20) * gridSize;
 
     // Compute Visibility
     const visionPolys = useMemo(() => {
         if (isGM) return null;
 
         const polys: Point[][] = [];
-        const wallScaler = activeMap.wallUnit === 'pixel' ? 1 : gridSize;
-        const walls: Wall[] = (activeMap.walls || []).map(w => ({
+        const wallScaler = activeMap?.wallUnit === 'pixel' ? 1 : gridSize;
+        const walls: Wall[] = (activeMap?.walls || []).map(w => ({
             start: { x: w.start.x * wallScaler, y: w.start.y * wallScaler },
             end: { x: w.end.x * wallScaler, y: w.end.y * wallScaler }
         }));
@@ -266,7 +264,7 @@ export const GameBoard = (props: GameBoardProps) => {
         // Note: For now we only have map lights. If tokens emit light, we'd add them here too.
         // We cast a visibility polygon for each light to account for walls blocking the light.
         const lightPolys: Point[][] = [];
-        (activeMap.lights || []).forEach(light => {
+        (activeMap?.lights || []).forEach(light => {
             // Light coords might need scaling if map unit is different?
             // Assuming lights are in grid coords because shared/index.ts says x,y.
             // But wait, walls are pixels or cells. Lights likely follow the grid?
@@ -281,8 +279,8 @@ export const GameBoard = (props: GameBoardProps) => {
 
         // Also check if any tokens emit light (future proofing, though not fully implemented in UI yet)
         campaign.tokens.forEach(t => {
-            if (t.visibility.emit_light?.enabled && t.position?.some(p => p.map === activeMap.id)) {
-                const pos = t.position.find(p => p.map === activeMap.id)!;
+            if (t.visibility.emit_light?.enabled && t.position?.some(p => p.map === activeMap?.id)) {
+                const pos = t.position.find(p => p.map === activeMap?.id)!;
                 const lightPos = { x: pos.x * gridSize + gridSize / 2, y: pos.y * gridSize + gridSize / 2 };
                 const radius = t.visibility.emit_light.radius * gridSize;
                 lightPolys.push(calculateVisibilityPolygon(lightPos, walls, radius));
@@ -292,7 +290,7 @@ export const GameBoard = (props: GameBoardProps) => {
         // 2. Calculate Vision for My Tokens
         const myTokens = campaign.tokens.filter(t => t.controlled_by.some(c => c.sessionId === sessionId));
         myTokens.forEach(t => {
-            const pos = t.position?.find(p => p.map === activeMap.id);
+            const pos = t.position?.find(p => p.map === activeMap?.id);
             if (pos) {
                 const p = { x: pos.x * gridSize + gridSize / 2, y: pos.y * gridSize + gridSize / 2 };
                 const radius = (t.visibility.view_distance || 12) * gridSize;
@@ -396,11 +394,15 @@ export const GameBoard = (props: GameBoardProps) => {
         };
 
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [hoveredTokenId, mousePos, applyQuickHp]);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
+        };
+    }, [hoveredTokenId, mousePos, applyQuickHp, quickHpValue]);
 
     // Reset explored areas and wall builder when switching maps
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setExploredPolys([]);
         setWallBuilderWalls([]);
         setWallBuilderStart(null);
@@ -412,12 +414,15 @@ export const GameBoard = (props: GameBoardProps) => {
         if (visionPolys) {
             // Add new vision polygons to explored history
             // Optimization: Union polygons or simplification could go here in future
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setExploredPolys(prev => [...prev, ...visionPolys]);
         }
     }, [visionPolys]);
 
-    const bg = activeMap.background?.[0];
+    const bg = activeMap?.background?.[0];
     const bgUrl = bg ? `${URL_PREFIX}${bg.picture}` : null;
+
+    if (!activeMap) return <div className="text-white p-4">Map not found.</div>;
 
     // Internal state moved to props
     // const [stageScale, setStageScale] = useState<number>(1);
@@ -666,7 +671,7 @@ export const GameBoard = (props: GameBoardProps) => {
                             // Visibility Check
                             let isVisible = true;
                             if (!isGM && visionPolys) {
-                                const pos = token.position.find(p => p.map === activeMap.id)!;
+                                const pos = token.position.find(p => p.map === activeMap?.id)!;
                                 const center = { x: pos.x * gridSize + gridSize / 2, y: pos.y * gridSize + gridSize / 2 };
                                 isVisible = visionPolys.some(poly => isPointInPolygon(center, poly));
                             }

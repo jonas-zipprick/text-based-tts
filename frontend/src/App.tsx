@@ -37,13 +37,18 @@ function App() {
     localStorage.setItem('sessionId', sessionId);
   }, [sessionId]);
 
-  // Keep selected token in sync with campaign updates
+  // Derived selected token to keep it in sync with campaign updates
+  const effectiveSelectedToken = useMemo(() => {
+    if (!selectedToken || !campaign) return null;
+    return campaign.tokens.find(t => t.id === selectedToken.id) || null;
+  }, [campaign, selectedToken]);
+
+  // If the token is no longer in the campaign, we should probably clear the selection
+  // but doing so in useMemo is a side effect. We can use an effect for THAT specific case.
   useEffect(() => {
-    if (selectedToken && campaign) {
-      const updatedToken = campaign.tokens.find(t => t.id === selectedToken.id);
-      if (updatedToken && JSON.stringify(updatedToken) !== JSON.stringify(selectedToken)) {
-        setSelectedToken(updatedToken);
-      }
+    if (selectedToken && campaign && !campaign.tokens.some(t => t.id === selectedToken.id)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedToken(null);
     }
   }, [campaign, selectedToken]);
 
@@ -190,9 +195,9 @@ function App() {
         onRemoveToken={handleRemoveToken}
         onTokenUpdate={handleTokenStatsUpdate}
       />
-      {selectedToken && (
+      {effectiveSelectedToken && (
         <CharacterSheet
-          token={selectedToken}
+          token={effectiveSelectedToken}
           onClose={() => setSelectedToken(null)}
           onUpdate={handleTokenStatsUpdate}
           onRoll={handleRoll}
