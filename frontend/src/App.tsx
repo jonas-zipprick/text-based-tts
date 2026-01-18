@@ -3,7 +3,7 @@ import { useCampaign } from './hooks/useCampaign';
 import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
 import './components/Navbar.css';
-import type { GameView } from './types/types';
+import type { GameView } from './model/game';
 import type { Token, RollEvent, Wall, Light } from '../../shared';
 import { ToastNotification } from './components/ToastNotification';
 import { Toaster, toast } from 'react-hot-toast';

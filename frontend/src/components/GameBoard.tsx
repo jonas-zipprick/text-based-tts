@@ -5,7 +5,7 @@ import { WallClipboardToast } from './WallClipboardToast';
 import { LightClipboardToast } from './LightClipboardToast';
 import useImage from 'use-image';
 import type { Campaign, Token, Point, Wall, Light } from '../../../shared';
-import type { GameView } from '../types/types';
+import type { GameView } from '../model/game';
 import { calculateVisibilityPolygon, isPointInPolygon, intersectPolygons } from '../utils/lighting';
 
 interface GameBoardProps {

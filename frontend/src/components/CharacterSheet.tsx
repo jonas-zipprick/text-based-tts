@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Token, RollEvent } from '../../../shared';
 import toast from 'react-hot-toast';
-import { ToastNotification } from './ToastNotification';
+
+import type { Token, RollEvent } from '../../../shared';
+
+import {AutoExpandingInput} from './AutoExpandingInput';
+import {ToastNotification} from './ToastNotification';
+import {getAttrModifier, getProficiencyBonus} from '../utils/dndGameLogic.ts';
+import {useDebounce} from '../utils/react.ts';
+
 import './CharacterSheet.css';
-
-/* Controlled By Section */
-
 
 interface CharacterSheetProps {
     token: Token;
@@ -15,84 +18,10 @@ interface CharacterSheetProps {
     isGM?: boolean;
 }
 
-
 // Calculate attribute modifier
 const getModifierText = (value: number): string => {
     const mod = Math.floor((value - 10) / 2);
     return mod >= 0 ? `+${mod}` : `${mod}`;
-};
-
-const getModifier = (value: number): number => {
-    return Math.floor((value - 10) / 2);
-};
-
-const getProficiencyBonus = (challenge: number): number => {
-    if (challenge < 5) return 2;
-    if (challenge < 9) return 3;
-    if (challenge < 13) return 4;
-    if (challenge < 17) return 5;
-    if (challenge < 21) return 6;
-    if (challenge < 25) return 7;
-    if (challenge < 29) return 8;
-    return 9;
-};
-
-// Debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
-        return () => clearTimeout(handler);
-    }, [value, delay]);
-
-    return debouncedValue;
-}
-
-interface AutoExpandingInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    className?: string;
-}
-
-const AutoExpandingInput: React.FC<AutoExpandingInputProps> = ({ className = '', style, ...props }) => {
-    const spanRef = useRef<HTMLSpanElement>(null);
-    const [width, setWidth] = useState<number | string>('auto');
-
-    useEffect(() => {
-        if (spanRef.current) {
-            setWidth(spanRef.current.offsetWidth + 6); // Small buffer
-        }
-    }, [props.value, props.placeholder]);
-
-    const displayValue = props.value || props.placeholder || '';
-
-    return (
-        <div className="auto-expand-container" style={{ display: 'inline-block', position: 'relative' }}>
-            <input
-                {...props}
-                className={`cs-editable ${className}`}
-                style={{ ...style, width: typeof width === 'number' ? `${width}px` : width }}
-            />
-            <span
-                ref={spanRef}
-                className={`cs-editable ${className}`}
-                style={{
-                    ...style,
-                    position: 'absolute',
-                    visibility: 'hidden',
-                    whiteSpace: 'pre',
-                    height: 0,
-                    padding: '1px 4px', // Match cs-editable padding
-                    border: 'none',
-                    left: 0,
-                    top: 0,
-                }}
-            >
-                {displayValue}
-            </span>
-        </div>
-    );
 };
 
 export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, onUpdate, onRoll, isGM }) => {
@@ -278,7 +207,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
             let breakdownParts: string[] = [];
 
             if (action.ability) {
-                const attrMod = getModifier(attrs[action.ability] || 10);
+                const attrMod = getAttrModifier(attrs[action.ability] || 10);
                 attackMod += attrMod;
                 breakdownParts.push(`${attrMod >= 0 ? '+' : ''}${attrMod} [${action.ability.toUpperCase()}]`);
 
@@ -825,7 +754,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     {action.ability && (
                                                         <span className="cs-total-bonus">
                                                             (Total: +{
-                                                                getModifier(attrs[action.ability] || 10) +
+                                                                getAttrModifier(attrs[action.ability] || 10) +
                                                                 (action.proficient ? getProficiencyBonus(localToken.stats.challenge || 0) : 0) +
                                                                 (action.modifiers?.attack || 0)
                                                             })
@@ -1160,7 +1089,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     {action.ability && (
                                                         <span className="cs-total-bonus">
                                                             (Total: +{
-                                                                getModifier(attrs[action.ability] || 10) +
+                                                                getAttrModifier(attrs[action.ability] || 10) +
                                                                 (action.proficient ? getProficiencyBonus(localToken.stats.challenge || 0) : 0) +
                                                                 (action.modifiers?.attack || 0)
                                                             })
