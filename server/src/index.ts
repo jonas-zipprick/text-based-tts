@@ -144,7 +144,6 @@ io.on('connection', (socket) => {
             // Optimistically update memory and broadcast
             const campaign = campaignManager.getCampaign();
             if (campaign) {
-                campaign.tokens.push(newToken);
                 io.emit('campaign-update', campaign);
             }
         }
