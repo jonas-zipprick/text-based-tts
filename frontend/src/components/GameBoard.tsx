@@ -408,6 +408,14 @@ export const GameBoard = (props: GameBoardProps) => {
         setWallBuilderStart(null);
     }, [activeMapId]);
 
+    // Reset tool when switching to player view
+    useEffect(() => {
+        if (view === 'player') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setActiveTool('select');
+        }
+    }, [view]);
+
 
     // Update Explored Polys
     useEffect(() => {

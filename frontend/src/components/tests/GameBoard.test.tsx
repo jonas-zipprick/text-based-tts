@@ -111,4 +111,91 @@ describe('GameBoard Component', () => {
         // Check coordinates in the mocked toast
         expect(toastElement.props.lights[0]).toMatchObject({ x: 0, y: 0 });
     });
+
+    it('should reset tool to select when switching from DM to Player view', () => {
+        const onRemoveToken = vi.fn();
+        const campaignWithToken: Campaign = {
+            ...mockCampaign,
+            tokens: [{
+                id: 1,
+                name: 'Test Token',
+                picture: '',
+                stats: {
+                    hp: 10,
+                    ac: 10,
+                    speed: 30,
+                    attributes: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
+                },
+                controlled_by: [],
+                position: [{ map: 1, x: 2, y: 2 }],
+                visibility: { night_vision: false }
+            }]
+        };
+
+        const { getByTitle, rerender, getByTestId } = render(
+            <GameBoard
+                campaign={campaignWithToken}
+                onTokenMove={vi.fn()}
+                view="dm"
+                isDaytime={true}
+                sessionId="test-session"
+                activeMapId={1}
+                stageScale={1}
+                setStageScale={vi.fn()}
+                stagePos={{ x: 0, y: 0 }}
+                setStagePos={vi.fn()}
+                onAddWalls={vi.fn()}
+                onAddLights={vi.fn()}
+                onRemoveWall={vi.fn()}
+                onRemoveLight={vi.fn()}
+                onAddToken={vi.fn()}
+                onRemoveToken={onRemoveToken}
+                onTokenUpdate={vi.fn()}
+            />
+        );
+
+        // 1. Select Trash tool
+        const trashTool = getByTitle('Trash Tool');
+        fireEvent.click(trashTool);
+
+        // 2. Switch to Player view via rerender
+        rerender(
+            <GameBoard
+                campaign={campaignWithToken}
+                onTokenMove={vi.fn()}
+                view="player"
+                isDaytime={true}
+                sessionId="test-session"
+                activeMapId={1}
+                stageScale={1}
+                setStageScale={vi.fn()}
+                stagePos={{ x: 0, y: 0 }}
+                setStagePos={vi.fn()}
+                onAddWalls={vi.fn()}
+                onAddLights={vi.fn()}
+                onRemoveWall={vi.fn()}
+                onRemoveLight={vi.fn()}
+                onAddToken={vi.fn()}
+                onRemoveToken={onRemoveToken}
+                onTokenUpdate={vi.fn()}
+            />
+        );
+
+        // 3. Try to use trash tool (click on stage where token is)
+        const stage = getByTestId('stage');
+        const createClickEvent = (x: number, y: number) => ({
+            target: {
+                getStage: () => ({
+                    isDragging: () => false,
+                    getPointerPosition: () => ({ x, y })
+                })
+            }
+        });
+
+        // Click at grid (2,2) -> pixel (100+25, 100+25) = (125, 125)
+        fireEvent.click(stage, createClickEvent(125, 125));
+
+        // 4. Verify onRemoveToken was NOT called (because tool reset to 'select')
+        expect(onRemoveToken).not.toHaveBeenCalled();
+    });
 });
