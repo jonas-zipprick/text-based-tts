@@ -727,3 +727,44 @@
     cursor: not-allowed;
     background: #999 !important;
 }
+
+/* Visibility Section */
+.cs-visibility-section {
+    margin-top: 10px;
+}
+
+.cs-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    user-select: none;
+}
+
+.cs-checkbox-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.cs-light-settings {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 10px;
+    font-size: 13px;
+    color: #555;
+    vertical-align: middle;
+}
+
+.cs-color-input {
+    width: 30px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid #58180d;
+    border-radius: 2px;
+    cursor: pointer;
+    background: none;
+}

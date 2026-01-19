@@ -389,7 +389,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     <div className="cs-header">
                         <h1 className="cs-name">
                             <AutoExpandingInput
-                                
+
                                 className="cs-editable-wide"
                                 value={localToken.name}
                                 onChange={e => updateField('name', e.target.value)}
@@ -398,14 +398,14 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         </h1>
                         <div className="cs-type-line">
                             <AutoExpandingInput
-                                
+
                                 className="cs-type-field"
                                 value={localToken.size || ''}
                                 onChange={e => updateField('size', e.target.value)}
                                 placeholder="Size"
                             />
                             <AutoExpandingInput
-                                
+
                                 className="cs-type-field"
                                 value={localToken.type || ''}
                                 onChange={e => updateField('type', e.target.value)}
@@ -415,7 +415,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 <>
                                     <span>, </span>
                                     <AutoExpandingInput
-                                        
+
                                         className="cs-type-field"
                                         value={localToken.alignment}
                                         onChange={e => updateField('alignment', e.target.value)}
@@ -439,7 +439,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 ))}
                                 <div className="cs-add-controller">
                                     <input
-                                        
+
                                         value={newSessionId}
                                         onChange={e => setNewSessionId(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && handleAddSessionId()}
@@ -459,12 +459,12 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         <div className="cs-stat-line">
                             <span className="cs-stat-label">Armor Class</span>
                             <AutoExpandingInput
-                                
+
                                 value={localToken.stats.ac}
                                 onChange={e => updateField('stats.ac', parseInt(e.target.value) || '')}
                             />
                             <AutoExpandingInput
-                                
+
                                 value={localToken.stats.acType || ''}
                                 onChange={e => updateField('stats.acType', e.target.value)}
                                 placeholder="(armor type)"
@@ -475,12 +475,12 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         <div className="cs-stat-line cs-hp-section">
                             <span className="cs-stat-label">Hit Points</span>
                             <AutoExpandingInput
-                                
+
                                 value={maxHp}
                                 onChange={e => updateField('stats.hp', parseInt(e.target.value) || '')}
                             />
                             <AutoExpandingInput
-                                
+
                                 value={localToken.stats.hpFormula || ''}
                                 onChange={e => updateField('stats.hpFormula', e.target.value)}
                                 placeholder="(dice formula)"
@@ -490,7 +490,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 <span>Current:</span>
                                 <span style={{ fontWeight: 'bold' }}>{currentHp}/{maxHp}</span>
                                 <AutoExpandingInput
-                                    
+
                                     className="cs-hp-input"
                                     value={hpInput}
                                     onChange={e => setHpInput(e.target.value)}
@@ -505,7 +505,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         <div className="cs-stat-line">
                             <span className="cs-stat-label">Speed</span>
                             <AutoExpandingInput
-                                
+
                                 className="cs-editable"
                                 value={localToken.stats.speed}
                                 onChange={e => updateField('stats.speed', e.target.value ? parseInt(e.target.value) : '')}
@@ -522,7 +522,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-attribute" key={attr}>
                                 <div className="cs-attr-label">{attr.toUpperCase()}</div>
                                 <AutoExpandingInput
-                                    
+
                                     className="cs-attr-value"
                                     value={attrs[attr] || 10}
                                     onChange={e => {
@@ -555,7 +555,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Damage Resistances </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.damageResistances.join(', ')}
                                     onChange={e => updateField('stats.damageResistances', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                                 />
@@ -566,7 +566,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Damage Vulnerabilities </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.damageVulnerabilities.join(', ')}
                                     onChange={e => updateField('stats.damageVulnerabilities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                                 />
@@ -577,7 +577,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Damage Immunities </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.damageImmunities.join(', ')}
                                     onChange={e => updateField('stats.damageImmunities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                                 />
@@ -588,7 +588,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Condition Immunities </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.conditionImmunities.join(', ')}
                                     onChange={e => updateField('stats.conditionImmunities', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                                 />
@@ -611,7 +611,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Senses </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.senses}
                                     onChange={e => updateField('stats.senses', e.target.value)}
                                 />
@@ -622,7 +622,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Languages </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.languages || '—'}
                                     onChange={e => updateField('stats.languages', e.target.value)}
                                 />
@@ -633,7 +633,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             <div className="cs-trait-line">
                                 <span className="cs-trait-label">Challenge </span>
                                 <AutoExpandingInput
-                                    
+
                                     value={localToken.stats.challenge}
                                     onChange={e => updateField('stats.challenge', parseFloat(e.target.value) || '')}
                                 />
@@ -642,6 +642,49 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                 )}
                             </div>
                         )}
+
+                        <div className="cs-thin-divider" />
+                        <div className="cs-visibility-section">
+                            <span className="cs-trait-label">Visibility & Light</span>
+                            <div className="cs-trait-line">
+                                <label className="cs-checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={localToken.visibility.night_vision || false}
+                                        onChange={e => updateField('visibility.night_vision', e.target.checked)}
+                                    />
+                                    Night Vision
+                                </label>
+                            </div>
+                            <div className="cs-trait-line">
+                                <label className="cs-checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={localToken.visibility.emit_light?.enabled || false}
+                                        onChange={e => updateField('visibility.emit_light.enabled', e.target.checked)}
+                                    />
+                                    Emit Light
+                                </label>
+                                {localToken.visibility.emit_light?.enabled && (
+                                    <div className="cs-light-settings">
+                                        <span> Radius: </span>
+                                        <AutoExpandingInput
+                                            id="emit-light-radius"
+                                            value={localToken.visibility.emit_light.radius || 20}
+                                            onChange={e => updateField('visibility.emit_light.radius', parseInt(e.target.value) || 0)}
+                                            style={{ width: '40px' }}
+                                        />
+                                        <span> ft. Color: </span>
+                                        <input
+                                            type="color"
+                                            value={localToken.visibility.emit_light.color || '#ffffff'}
+                                            onChange={e => updateField('visibility.emit_light.color', e.target.value)}
+                                            className="cs-color-input"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Traits/Abilities */}
@@ -670,7 +713,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                     <div className="cs-action" key={index}>
                                         <div className="cs-action-header">
                                             <input
-                                                
+
                                                 className="cs-editable cs-action-name"
                                                 value={action.name}
                                                 onChange={e => updateField(`stats.attacks.${index}.name`, e.target.value)}
@@ -743,7 +786,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
                                                     <span> +</span>
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={action.modifiers?.attack || 0}
                                                         onChange={e => updateField(`stats.attacks.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
                                                         style={{ width: '30px' }}
@@ -763,7 +806,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                         <>
                                                             <span>Range </span>
                                                             <AutoExpandingInput
-                                                                
+
                                                                 value={action.range}
                                                                 onChange={e => updateField(`stats.attacks.${index}.range`, parseInt(e.target.value) || '')}
                                                             />
@@ -773,7 +816,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                         <>
                                                             <span>Reach </span>
                                                             <AutoExpandingInput
-                                                                
+
                                                                 value={action.reach || 5}
                                                                 onChange={e => updateField(`stats.attacks.${index}.reach`, parseInt(e.target.value) || '')}
                                                             />
@@ -782,7 +825,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     )}
                                                     <span>, </span>
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={action.targets || 1}
                                                         onChange={e => updateField(`stats.attacks.${index}.targets`, parseInt(e.target.value) || 1)}
                                                     />
@@ -792,13 +835,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                             <div className="cs-action-hit-row">
                                                 <span>Hit: </span>
                                                 <AutoExpandingInput
-                                                    
+
                                                     value={action.hit || ''}
                                                     onChange={e => updateField(`stats.attacks.${index}.hit`, e.target.value)}
                                                     placeholder="dice (e.g. 1d8+2)"
                                                 />
                                                 <AutoExpandingInput
-                                                    
+
                                                     value={action.type || ''}
                                                     onChange={e => updateField(`stats.attacks.${index}.type`, e.target.value)}
                                                     placeholder="type"
@@ -810,13 +853,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 <div className="cs-action-hit-row" key={eIdx}>
                                                     <span>plus </span>
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={extra.hit || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
                                                         placeholder="dice"
                                                     />
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={extra.type || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.extraDamage.${eIdx}.type`, e.target.value)}
                                                         placeholder="type"
@@ -894,7 +937,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                     <div className="cs-action" key={index}>
                                         <div className="cs-action-header">
                                             <input
-                                                
+
                                                 className="cs-editable cs-action-name"
                                                 value={spell.name}
                                                 onChange={e => updateField(`stats.spells.${index}.name`, e.target.value)}
@@ -914,11 +957,11 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                         <div className="cs-action-body">
                                             <div className="cs-spell-details">
                                                 <span>Time: </span>
-                                                <AutoExpandingInput  value={spell.casting_time} onChange={e => updateField(`stats.spells.${index}.casting_time`, e.target.value)} />
+                                                <AutoExpandingInput value={spell.casting_time} onChange={e => updateField(`stats.spells.${index}.casting_time`, e.target.value)} />
                                                 <span> | Range: </span>
-                                                <AutoExpandingInput  value={spell.range} onChange={e => updateField(`stats.spells.${index}.range`, e.target.value)} />
+                                                <AutoExpandingInput value={spell.range} onChange={e => updateField(`stats.spells.${index}.range`, e.target.value)} />
                                                 <span> | Dur: </span>
-                                                <AutoExpandingInput  value={spell.duration} onChange={e => updateField(`stats.spells.${index}.duration`, e.target.value)} />
+                                                <AutoExpandingInput value={spell.duration} onChange={e => updateField(`stats.spells.${index}.duration`, e.target.value)} />
                                             </div>
                                             <div className="cs-spell-comps">
                                                 <label><input type="checkbox" checked={spell.components.verbal} onChange={e => updateField(`stats.spells.${index}.components.verbal`, e.target.checked)} /> V</label>
@@ -926,7 +969,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 <label><input type="checkbox" checked={spell.components.material} onChange={e => updateField(`stats.spells.${index}.components.material`, e.target.checked)} /> M</label>
                                                 {spell.components.material && (
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={spell.components.material_cost || ''}
                                                         onChange={e => updateField(`stats.spells.${index}.components.material_cost`, e.target.value)}
                                                         placeholder="(materials)"
@@ -955,7 +998,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                             <>
                                                                 <span>Attack: +</span>
                                                                 <AutoExpandingInput
-                                                                    
+
                                                                     value={spell.attack_bonus}
                                                                     onChange={e => updateField(`stats.spells.${index}.attack_bonus`, e.target.value)}
                                                                 />
@@ -965,12 +1008,12 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                             <>
                                                                 <span style={{ marginLeft: spell.attack_bonus ? '8px' : '0' }}>Damage: </span>
                                                                 <AutoExpandingInput
-                                                                    
+
                                                                     value={spell.damage.dice}
                                                                     onChange={e => updateField(`stats.spells.${index}.damage.dice`, e.target.value)}
                                                                 />
                                                                 <AutoExpandingInput
-                                                                    
+
                                                                     value={spell.damage.type}
                                                                     onChange={e => updateField(`stats.spells.${index}.damage.type`, e.target.value)}
                                                                     style={{ fontStyle: 'italic' }}
@@ -984,7 +1027,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                     <div className="cs-action-hit-row">
                                                         <span>Save: DC </span>
                                                         <AutoExpandingInput
-                                                            
+
                                                             value={spell.save.dc || ''}
                                                             onChange={e => updateField(`stats.spells.${index}.save.dc`, parseInt(e.target.value))}
                                                         />
@@ -1021,7 +1064,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                     <div className="cs-action" key={index}>
                                         <div className="cs-action-header">
                                             <input
-                                                
+
                                                 className="cs-editable cs-action-name"
                                                 value={action.name}
                                                 onChange={e => updateField(`stats.attacks.${index}.name`, e.target.value)}
@@ -1078,7 +1121,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
                                                     <span> +</span>
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={action.modifiers?.attack || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.modifiers.attack`, parseInt(e.target.value) || '')}
                                                         style={{ width: '30px' }}
@@ -1100,13 +1143,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 <div className="cs-action-hit-row">
                                                     <span>Hit: </span>
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={action.hit || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.hit`, e.target.value)}
                                                         placeholder="dice"
                                                     />
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={action.type || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.type`, e.target.value)}
                                                         placeholder="type"
@@ -1119,13 +1162,13 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                                 <div className="cs-action-hit-row" key={eIdx}>
                                                     <span>plus </span>
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={extra.hit || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.extraDamage.${eIdx}.hit`, e.target.value)}
                                                         placeholder="dice"
                                                     />
                                                     <AutoExpandingInput
-                                                        
+
                                                         value={extra.type || ''}
                                                         onChange={e => updateField(`stats.attacks.${index}.extraDamage.${eIdx}.type`, e.target.value)}
                                                         placeholder="type"

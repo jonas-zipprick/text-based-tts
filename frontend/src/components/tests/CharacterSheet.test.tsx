@@ -95,4 +95,34 @@ describe('CharacterSheet Component', () => {
         expect(screen.getByText('(-1)')).toBeDefined(); // WIS 8 -> -1
         expect(screen.getByText('(-2)')).toBeDefined(); // CHA 6 -> -2
     });
+
+    it('should render visibility and light emission fields', () => {
+        const tokenWithLight = {
+            ...mockToken,
+            visibility: {
+                night_vision: true,
+                emit_light: {
+                    enabled: true,
+                    radius: 20,
+                    color: '#ffffff',
+                },
+            },
+        };
+
+        render(
+            <CharacterSheet
+                token={tokenWithLight}
+                onClose={vi.fn()}
+                onUpdate={vi.fn()}
+            />
+        );
+
+        expect(screen.getByText('Visibility & Light')).toBeDefined();
+        expect(screen.getByLabelText('Night Vision')).toBeDefined();
+        expect(screen.getByLabelText('Emit Light')).toBeDefined();
+
+        const radiusInput = document.getElementById('emit-light-radius') as HTMLTextAreaElement;
+        expect(radiusInput).toBeDefined();
+        expect(radiusInput.value).toBe('20');
+    });
 });
