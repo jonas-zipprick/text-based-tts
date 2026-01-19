@@ -14,7 +14,7 @@ vi.mock('react-hot-toast', () => ({
 
 describe('LightClipboardToast Component', () => {
     const mockLights: Light[] = [
-        { x: 100, y: 200, radius: 50, color: '#f1c40f' }
+        { x: 100, y: 200, radius: 50 }
     ];
     const mockToast = { id: 't-1', visible: true } as Toast;
 
@@ -25,7 +25,7 @@ describe('LightClipboardToast Component', () => {
         expect(textarea.textContent).toContain('x: 100');
         expect(textarea.textContent).toContain('y: 200');
         expect(textarea.textContent).toContain('radius: 50');
-        expect(textarea.textContent).toContain('color: "#f1c40f"');
+        expect(textarea.textContent).not.toContain('color:');
     });
 
     it('should call onSave with parsed YAML when clicking Save', () => {
@@ -36,7 +36,7 @@ describe('LightClipboardToast Component', () => {
         fireEvent.click(saveButton);
 
         expect(onSave).toHaveBeenCalledWith([
-            { x: 100, y: 200, radius: 50, color: '#f1c40f' }
+            { x: 100, y: 200, radius: 50 }
         ]);
     });
 

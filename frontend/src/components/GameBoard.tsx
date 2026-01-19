@@ -236,7 +236,7 @@ export const GameBoard = (props: GameBoardProps) => {
     const [wallBuilderStart, setWallBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [doorBuilderStart, setDoorBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [lightBuilderLights, setLightBuilderLights] = useState<Light[]>([]);
-    const [lastLightSettings, setLastLightSettings] = useState<{ radius: number, color: string }>({ radius: 6, color: '#f1c40f' });
+    const [lastLightSettings, setLastLightSettings] = useState<{ radius: number }>({ radius: 6 });
 
     // NPC Search State
     const [npcSearch, setNpcSearch] = useState('');
@@ -560,7 +560,7 @@ export const GameBoard = (props: GameBoardProps) => {
                 setDoorBuilderStart(null);
             }
         } else if (activeTool === 'light') {
-            const newLight: Light = { x: gridX, y: gridY, radius: lastLightSettings.radius, color: lastLightSettings.color };
+            const newLight: Light = { x: gridX, y: gridY, radius: lastLightSettings.radius };
             const updatedLights = [...lightBuilderLights, newLight];
             setLightBuilderLights(updatedLights);
 
@@ -865,7 +865,7 @@ export const GameBoard = (props: GameBoardProps) => {
                                 {/* Range Circle */}
                                 <Circle
                                     radius={light.radius * gridSize}
-                                    stroke={light.color || "#f1c40f"}
+                                    stroke="#f1c40f"
                                     strokeWidth={3}
                                     dash={[10, 10]}
                                     opacity={0.8}

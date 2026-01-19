@@ -514,8 +514,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         </div>
                     </div>
 
-                    <div className="cs-divider" />
-
                     {/* Attributes */}
                     <div className="cs-attributes">
                         {['str', 'dex', 'con', 'int', 'wis', 'cha'].map(attr => (
@@ -535,7 +533,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                         ))}
                     </div>
 
-                    <div className="cs-thin-divider" />
 
                     {/* Additional Traits */}
                     <div className="cs-traits">
@@ -643,9 +640,8 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                             </div>
                         )}
 
-                        <div className="cs-thin-divider" />
+                        <h2 className="cs-section-title">Visibility & Light</h2>
                         <div className="cs-visibility-section">
-                            <span className="cs-trait-label">Visibility & Light</span>
                             <div className="cs-trait-line">
                                 <label className="cs-checkbox-label">
                                     <input
@@ -656,7 +652,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                     Night Vision
                                 </label>
                             </div>
-                            <div className="cs-trait-line">
+                            <div className="cs-trait-line" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <label className="cs-checkbox-label">
                                     <input
                                         type="checkbox"
@@ -666,21 +662,14 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                                     Emit Light
                                 </label>
                                 {localToken.visibility.emit_light?.enabled && (
-                                    <div className="cs-light-settings">
+                                    <div className="cs-light-settings" style={{ marginLeft: '4px' }}>
                                         <span> Radius: </span>
                                         <AutoExpandingInput
                                             id="emit-light-radius"
                                             value={localToken.visibility.emit_light.radius || 20}
                                             onChange={e => updateField('visibility.emit_light.radius', parseInt(e.target.value) || 0)}
-                                            style={{ width: '40px' }}
                                         />
-                                        <span> ft. Color: </span>
-                                        <input
-                                            type="color"
-                                            value={localToken.visibility.emit_light.color || '#ffffff'}
-                                            onChange={e => updateField('visibility.emit_light.color', e.target.value)}
-                                            className="cs-color-input"
-                                        />
+                                        <span> ft.</span>
                                     </div>
                                 )}
                             </div>
@@ -690,7 +679,6 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
                     {/* Traits/Abilities */}
                     {localToken.stats.traits && localToken.stats.traits.length > 0 && (
                         <>
-                            <div className="cs-thin-divider" />
                             {localToken.stats.traits.map((trait, index) => (
                                 <div className="cs-ability" key={index}>
                                     <p className="cs-ability-desc">

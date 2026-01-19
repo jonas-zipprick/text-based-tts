@@ -19,7 +19,6 @@ export type Light = {
     x: number;
     y: number;
     radius: number;
-    color: string;
 };
 
 export type MapData = {
@@ -127,7 +126,6 @@ export type TokenVisibility = {
     emit_light?: {
         enabled: boolean;
         radius: number;
-        color: string;
     };
 };
 

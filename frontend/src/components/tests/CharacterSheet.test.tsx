@@ -104,7 +104,6 @@ describe('CharacterSheet Component', () => {
                 emit_light: {
                     enabled: true,
                     radius: 20,
-                    color: '#ffffff',
                 },
             },
         };

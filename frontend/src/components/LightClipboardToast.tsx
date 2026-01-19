@@ -8,14 +8,13 @@ interface LightClipboardToastProps {
     t: Toast;
     onClose: () => void;
     onSave?: (lights: Light[]) => void;
-    onSettingsChange?: (settings: { radius: number, color: string }) => void;
+    onSettingsChange?: (settings: { radius: number }) => void;
 }
 
 export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights, t, onClose, onSave, onSettingsChange }) => {
     const formatLight = (l: Light) => `  - x: ${Math.round(l.x)}
     y: ${Math.round(l.y)}
-    radius: ${l.radius}
-    color: "${l.color}"`;
+    radius: ${l.radius}`;
 
     // Format initial lights
     const initialText = lights.map(formatLight).join('\n');
@@ -39,8 +38,8 @@ export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights
             const parsed = yaml.load(editedText) as unknown[];
             if (Array.isArray(parsed) && parsed.length > 0) {
                 const last = parsed[parsed.length - 1] as Record<string, unknown>;
-                if (last && typeof last.radius === 'number' && typeof last.color === 'string') {
-                    onSettingsChange?.({ radius: last.radius, color: last.color });
+                if (last && typeof last.radius === 'number') {
+                    onSettingsChange?.({ radius: last.radius });
                 }
             }
         } catch {
@@ -51,7 +50,7 @@ export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights
     const handleSave = () => {
         if (!onSave) return;
         try {
-            const parsed = yaml.load(editedText) as Array<{ x: unknown; y: unknown; radius: unknown; color?: string }>;
+            const parsed = yaml.load(editedText) as Array<{ x: unknown; y: unknown; radius: unknown }>;
             if (!Array.isArray(parsed)) {
                 throw new Error("Invalid format: Must be a list starting with '-'");
             }
@@ -68,8 +67,7 @@ export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights
                 return {
                     x,
                     y,
-                    radius,
-                    color: item.color || "#f1c40f"
+                    radius
                 };
             });
 
