@@ -382,6 +382,14 @@ export const GameBoard = (props: GameBoardProps) => {
             // Ignore if in an input or textarea
             if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
 
+            if (e.key === 'Escape') {
+                setWallBuilderStart(null);
+                setDoorBuilderStart(null);
+                setQuickHpValue('');
+                setQuickHpPos(null);
+                if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
+            }
+
             if (hoveredTokenId !== null) {
                 if (['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
                     setQuickHpValue(prev => prev + e.key);
@@ -398,7 +406,7 @@ export const GameBoard = (props: GameBoardProps) => {
                         if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
                         applyQuickHp();
                     }
-                } else if (e.key === 'Escape' || e.key === 'Backspace') {
+                } else if (e.key === 'Backspace') {
                     setQuickHpValue('');
                     setQuickHpPos(null);
                     if (quickHpTimerRef.current) clearTimeout(quickHpTimerRef.current);
@@ -526,6 +534,13 @@ export const GameBoard = (props: GameBoardProps) => {
         const gridY = Math.floor(pixelY / gridSize);
         const clickPoint = { x: Math.round(pixelX), y: Math.round(pixelY) };
 
+        // Right click to cancel building
+        if (e.evt instanceof MouseEvent && e.evt.button === 2) {
+            setWallBuilderStart(null);
+            setDoorBuilderStart(null);
+            return;
+        }
+
         if (activeTool === 'wall') {
             if (!wallBuilderStart) {
                 setWallBuilderStart(clickPoint);
@@ -533,7 +548,7 @@ export const GameBoard = (props: GameBoardProps) => {
             } else {
                 const newWall: Wall = { start: wallBuilderStart, end: clickPoint };
                 onAddWalls(activeMapId, [newWall]);
-                setWallBuilderStart(null);
+                setWallBuilderStart(clickPoint); // Continue building from this point
             }
         } else if (activeTool === 'door') {
             if (!doorBuilderStart) {
@@ -633,6 +648,12 @@ export const GameBoard = (props: GameBoardProps) => {
                 draggable
                 onClick={handleStageClick}
                 onTap={handleStageClick}
+                onContextMenu={(e) => {
+                    // Prevent context menu when using tools
+                    if (isGM && activeTool !== 'select') {
+                        e.evt.preventDefault();
+                    }
+                }}
                 onWheel={handleWheel}
                 onMouseMove={handleMouseMove}
                 onDragMove={handleMouseMove}
