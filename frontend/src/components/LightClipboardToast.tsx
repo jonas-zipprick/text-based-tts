@@ -8,9 +8,10 @@ interface LightClipboardToastProps {
     t: Toast;
     onClose: () => void;
     onSave?: (lights: Light[]) => void;
+    onSettingsChange?: (settings: { radius: number, color: string }) => void;
 }
 
-export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights, t, onClose, onSave }) => {
+export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights, t, onClose, onSave, onSettingsChange }) => {
     const formatLight = (l: Light) => `  - x: ${Math.round(l.x)}
     y: ${Math.round(l.y)}
     radius: ${l.radius}
@@ -31,6 +32,21 @@ export const LightClipboardToast: React.FC<LightClipboardToastProps> = ({ lights
         }
         prevLightsCount.current = lights.length;
     }, [lights]);
+
+    // Report settings changes to parent
+    useEffect(() => {
+        try {
+            const parsed = yaml.load(editedText) as unknown[];
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                const last = parsed[parsed.length - 1] as Record<string, unknown>;
+                if (last && typeof last.radius === 'number' && typeof last.color === 'string') {
+                    onSettingsChange?.({ radius: last.radius, color: last.color });
+                }
+            }
+        } catch {
+            // Ignore parse errors while typing
+        }
+    }, [editedText, onSettingsChange]);
 
     const handleSave = () => {
         if (!onSave) return;

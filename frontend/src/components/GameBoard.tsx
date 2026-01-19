@@ -236,6 +236,7 @@ export const GameBoard = (props: GameBoardProps) => {
     const [wallBuilderStart, setWallBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [doorBuilderStart, setDoorBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [lightBuilderLights, setLightBuilderLights] = useState<Light[]>([]);
+    const [lastLightSettings, setLastLightSettings] = useState<{ radius: number, color: string }>({ radius: 6, color: '#f1c40f' });
 
     // NPC Search State
     const [npcSearch, setNpcSearch] = useState('');
@@ -544,8 +545,7 @@ export const GameBoard = (props: GameBoardProps) => {
                 setDoorBuilderStart(null);
             }
         } else if (activeTool === 'light') {
-            // ... (existing light logic)
-            const newLight: Light = { x: gridX, y: gridY, radius: 6, color: '#f1c40f' }; // Reverted to original defaults
+            const newLight: Light = { x: gridX, y: gridY, radius: lastLightSettings.radius, color: lastLightSettings.color };
             const updatedLights = [...lightBuilderLights, newLight];
             setLightBuilderLights(updatedLights);
 
@@ -560,6 +560,7 @@ export const GameBoard = (props: GameBoardProps) => {
                         toast.success("Lights saved!");
                         toast.dismiss(t.id);
                     }}
+                    onSettingsChange={setLastLightSettings}
                 />
             ), {
                 id: 'light-builder',
