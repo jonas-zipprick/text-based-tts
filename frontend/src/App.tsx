@@ -4,7 +4,7 @@ import { GameBoard } from './components/GameBoard';
 import { CharacterSheet } from './components/CharacterSheet';
 import './components/Navbar.css';
 import type { GameView } from './model/game';
-import type { Token, RollEvent, Wall, Light } from '../../shared';
+import type { Token, RollEvent, Wall, Light, Door } from '../../shared';
 import { ToastNotification } from './components/ToastNotification';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -113,6 +113,24 @@ function App() {
     }
   }, [socket]);
 
+  const handleAddDoors = useCallback((mapId: number, doors: Door[]) => {
+    if (socket) {
+      socket.emit('add-doors', { mapId, doors });
+    }
+  }, [socket]);
+
+  const handleRemoveDoor = useCallback((mapId: number, door: Door) => {
+    if (socket) {
+      socket.emit('remove-door', { mapId, door });
+    }
+  }, [socket]);
+
+  const handleToggleDoor = useCallback((mapId: number, doorId: number) => {
+    if (socket) {
+      socket.emit('toggle-door', { mapId, doorId });
+    }
+  }, [socket]);
+
   const handleAddToken = useCallback((blueprintId: number, mapId: number, x: number, y: number) => {
     if (socket) {
       socket.emit('add-token', { blueprintId, mapId, x, y });
@@ -191,6 +209,9 @@ function App() {
         onAddLights={handleAddLights}
         onRemoveWall={handleRemoveWall}
         onRemoveLight={handleRemoveLight}
+        onAddDoors={handleAddDoors}
+        onRemoveDoor={handleRemoveDoor}
+        onToggleDoor={handleToggleDoor}
         onAddToken={handleAddToken}
         onRemoveToken={handleRemoveToken}
         onTokenUpdate={handleTokenStatsUpdate}

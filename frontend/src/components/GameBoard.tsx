@@ -2,10 +2,9 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Image as KonvaImage, Group, Line, Text, Path } from 'react-konva';
 import type Konva from 'konva';
 import { toast } from 'react-hot-toast';
-import { WallClipboardToast } from './WallClipboardToast';
 import { LightClipboardToast } from './LightClipboardToast';
 import useImage from 'use-image';
-import type { Campaign, Token, Point, Wall, Light } from '../../../shared';
+import type { Campaign, Token, Point, Wall, Light, Door } from '../../../shared';
 import type { GameView } from '../model/game';
 import { calculateVisibilityPolygon, isPointInPolygon, intersectPolygons } from '../utils/lighting';
 
@@ -23,8 +22,11 @@ interface GameBoardProps {
     setStagePos: (pos: { x: number, y: number }) => void;
     onAddWalls: (mapId: number, walls: Wall[]) => void;
     onAddLights: (mapId: number, lights: Light[]) => void;
+    onAddDoors: (mapId: number, doors: Door[]) => void;
     onRemoveWall: (mapId: number, wall: Wall) => void;
     onRemoveLight: (mapId: number, light: Light) => void;
+    onRemoveDoor: (mapId: number, door: Door) => void;
+    onToggleDoor: (mapId: number, doorId: number) => void;
     onAddToken: (blueprintId: number, mapId: number, x: number, y: number) => void;
     onRemoveToken: (tokenId: number) => void;
     onTokenUpdate: (tokenId: number, updates: Partial<Token>) => void;
@@ -214,13 +216,13 @@ const TokenComponent = ({ token, gridSize, onMove, activeMapId, onDragStart, onD
     );
 };
 
-type EditorTool = 'select' | 'wall' | 'light' | 'trash' | 'npc';
+type EditorTool = 'select' | 'wall' | 'door' | 'light' | 'trash' | 'npc';
 
 export const GameBoard = (props: GameBoardProps) => {
     const {
         campaign, onTokenMove, onTokenDoubleClick, view, isDaytime, sessionId,
         activeMapId, stageScale, setStageScale, stagePos, setStagePos,
-        onAddWalls, onAddLights, onRemoveWall, onRemoveLight, onAddToken, onRemoveToken, onTokenUpdate
+        onAddWalls, onAddLights, onAddDoors, onRemoveWall, onRemoveLight, onRemoveDoor, onToggleDoor, onAddToken, onRemoveToken, onTokenUpdate
     } = props;
 
     const activeMap = campaign.maps.find(m => m.id === activeMapId);
@@ -232,7 +234,7 @@ export const GameBoard = (props: GameBoardProps) => {
     // Map Editor State
     const [activeTool, setActiveTool] = useState<EditorTool>('select');
     const [wallBuilderStart, setWallBuilderStart] = useState<{ x: number, y: number } | null>(null);
-    const [wallBuilderWalls, setWallBuilderWalls] = useState<Wall[]>([]);
+    const [doorBuilderStart, setDoorBuilderStart] = useState<{ x: number, y: number } | null>(null);
     const [lightBuilderLights, setLightBuilderLights] = useState<Light[]>([]);
 
     // NPC Search State
@@ -259,6 +261,16 @@ export const GameBoard = (props: GameBoardProps) => {
             start: { x: w.start.x * wallScaler, y: w.start.y * wallScaler },
             end: { x: w.end.x * wallScaler, y: w.end.y * wallScaler }
         }));
+
+        // Add closed doors as walls
+        (activeMap?.doors || []).forEach(door => {
+            if (!door.open) {
+                walls.push({
+                    start: { x: door.start.x * wallScaler, y: door.start.y * wallScaler },
+                    end: { x: door.end.x * wallScaler, y: door.end.y * wallScaler }
+                });
+            }
+        });
 
         // 1. Calculate Global Lit Area (Map Lights)
         // Note: For now we only have map lights. If tokens emit light, we'd add them here too.
@@ -400,11 +412,9 @@ export const GameBoard = (props: GameBoardProps) => {
         };
     }, [hoveredTokenId, mousePos, applyQuickHp, quickHpValue]);
 
-    // Reset explored areas and wall builder when switching maps
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setExploredPolys([]);
-        setWallBuilderWalls([]);
         setWallBuilderStart(null);
     }, [activeMapId]);
 
@@ -516,32 +526,22 @@ export const GameBoard = (props: GameBoardProps) => {
         const clickPoint = { x: Math.round(pixelX), y: Math.round(pixelY) };
 
         if (activeTool === 'wall') {
-            // ... (existing wall logic)
             if (!wallBuilderStart) {
                 setWallBuilderStart(clickPoint);
                 toast('Click endpoint to finish wall', { id: 'wall-hint', duration: 2000, icon: '✏️' });
             } else {
                 const newWall: Wall = { start: wallBuilderStart, end: clickPoint };
-                const updatedWalls = [...wallBuilderWalls, newWall];
-                setWallBuilderWalls(updatedWalls);
+                onAddWalls(activeMapId, [newWall]);
                 setWallBuilderStart(null);
-
-                toast.custom((t) => (
-                    <WallClipboardToast
-                        walls={updatedWalls}
-                        t={t}
-                        onClose={() => setWallBuilderWalls([])}
-                        onSave={(editedWalls) => {
-                            onAddWalls(activeMapId, editedWalls);
-                            setWallBuilderWalls([]);
-                            toast.success("Walls saved!");
-                            toast.dismiss(t.id);
-                        }}
-                    />
-                ), {
-                    id: 'wall-builder',
-                    duration: Infinity
-                });
+            }
+        } else if (activeTool === 'door') {
+            if (!doorBuilderStart) {
+                setDoorBuilderStart(clickPoint);
+                toast('Click endpoint to finish door', { id: 'door-hint', duration: 2000, icon: '🚪' });
+            } else {
+                const newDoor: Partial<Door> = { start: doorBuilderStart, end: clickPoint, open: false };
+                onAddDoors(activeMapId, [newDoor as Door]);
+                setDoorBuilderStart(null);
             }
         } else if (activeTool === 'light') {
             // ... (existing light logic)
@@ -603,9 +603,20 @@ export const GameBoard = (props: GameBoardProps) => {
                     const dist = getDistanceToSegment(clickPoint, start, end);
                     return dist < 15;
                 });
-
                 if (hitWall) {
                     onRemoveWall(activeMapId, hitWall);
+                    return;
+                }
+
+                const hitDoor = activeMap.doors?.find(d => {
+                    const start = { x: d.start.x * wallScaler, y: d.start.y * wallScaler };
+                    const end = { x: d.end.x * wallScaler, y: d.end.y * wallScaler };
+                    const dist = getDistanceToSegment(clickPoint, start, end);
+                    return dist < 15;
+                });
+
+                if (hitDoor) {
+                    onRemoveDoor(activeMapId, hitDoor);
                 }
             }
         } else if (activeTool === 'npc' && selectedBlueprint) {
@@ -766,7 +777,62 @@ export const GameBoard = (props: GameBoardProps) => {
                                 </Group>
                             );
                         })}
+                    </Layer>
+                )}
 
+                {/* Doors Layer - Visible in all modes */}
+                <Layer>
+                    {(activeMap.doors || []).map((door) => {
+                        const wallScaler = activeMap.wallUnit === 'pixel' ? 1 : gridSize;
+                        const points = [
+                            door.start.x * wallScaler,
+                            door.start.y * wallScaler,
+                            door.end.x * wallScaler,
+                            door.end.y * wallScaler
+                        ];
+                        const centerX = (door.start.x + door.end.x) / 2 * wallScaler;
+                        const centerY = (door.start.y + door.end.y) / 2 * wallScaler;
+
+                        return (
+                            <Group key={`door-${door.id}`}>
+                                <Line
+                                    points={points}
+                                    stroke={door.open ? "#2ecc71" : "#e74c3c"}
+                                    strokeWidth={door.open ? 4 : 8}
+                                    lineCap="round"
+                                    opacity={door.open ? 0.3 : 0.8}
+                                    dash={door.open ? [10, 10] : []}
+                                    listening={false}
+                                />
+                                <Group
+                                    x={centerX}
+                                    y={centerY}
+                                    onClick={() => onToggleDoor(activeMapId, door.id)}
+                                    onTap={() => onToggleDoor(activeMapId, door.id)}
+                                >
+                                    <Circle
+                                        radius={15}
+                                        fill="rgba(0,0,0,0.6)"
+                                        stroke="white"
+                                        strokeWidth={1}
+                                    />
+                                    <Text
+                                        text={door.open ? "🔓" : "🚪"}
+                                        fontSize={20}
+                                        x={-10}
+                                        y={-10}
+                                        width={20}
+                                        align="center"
+                                    />
+                                </Group>
+                            </Group>
+                        );
+                    })}
+                </Layer>
+
+                {/* Editor Lights & Helpers */}
+                {view === 'editor' && (
+                    <Layer>
                         {/* Editor Lights */}
                         {(activeMap.lights || []).map((light, i) => (
                             <Group
@@ -834,6 +900,35 @@ export const GameBoard = (props: GameBoardProps) => {
                                 )}
                             </Group>
                         )}
+
+                        {/* Door Builder Feedback */}
+                        {doorBuilderStart && (
+                            <Group>
+                                <Circle
+                                    x={doorBuilderStart.x}
+                                    y={doorBuilderStart.y}
+                                    radius={4}
+                                    fill="#2ecc71"
+                                    stroke="white"
+                                    strokeWidth={1}
+                                    listening={false}
+                                />
+                                {mousePos && (
+                                    <Line
+                                        points={[
+                                            doorBuilderStart.x,
+                                            doorBuilderStart.y,
+                                            mousePos.x,
+                                            mousePos.y
+                                        ]}
+                                        stroke="#2ecc71"
+                                        strokeWidth={2}
+                                        dash={[5, 5]}
+                                        listening={false}
+                                    />
+                                )}
+                            </Group>
+                        )}
                     </Layer>
                 )}
 
@@ -885,6 +980,16 @@ export const GameBoard = (props: GameBoardProps) => {
                                 title="Wall Builder"
                             >
                                 🧱
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setActiveTool('door');
+                                    setDoorBuilderStart(null);
+                                }}
+                                className={`p-2 rounded border border-zinc-600 transition-colors ${activeTool === 'door' ? 'bg-yellow-600 text-white shadow-[0_0_10px_rgba(202,138,4,0.5)]' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+                                title="Door Builder"
+                            >
+                                🚪
                             </button>
                             <button
                                 onClick={() => setActiveTool('light')}

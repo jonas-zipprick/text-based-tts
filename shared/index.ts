@@ -8,6 +8,13 @@ export type Wall = {
     end: Point;
 };
 
+export type Door = {
+    id: number;
+    start: Point;
+    end: Point;
+    open: boolean;
+};
+
 export type Light = {
     x: number;
     y: number;
@@ -28,6 +35,7 @@ export type MapData = {
         size: string;
     }[];
     walls: Wall[];
+    doors?: Door[];
     wallUnit?: 'cell' | 'pixel';
     lights: Light[];
 };

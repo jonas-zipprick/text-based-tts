@@ -4,7 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import { CampaignManager } from './campaignManager';
-import { Token, Wall, Light } from '../../shared';
+import { Token, Wall, Light, Door } from '../../shared';
 
 const app = express();
 const httpServer = createServer(app);
@@ -136,6 +136,18 @@ io.on('connection', (socket) => {
 
     socket.on('remove-light', ({ mapId, light }: { mapId: number, light: Light }) => {
         campaignManager.removeLight(mapId, light);
+    });
+
+    socket.on('add-doors', ({ mapId, doors }: { mapId: number, doors: Door[] }) => {
+        campaignManager.addDoors(mapId, doors);
+    });
+
+    socket.on('remove-door', ({ mapId, door }: { mapId: number, door: Door }) => {
+        campaignManager.removeDoor(mapId, door);
+    });
+
+    socket.on('toggle-door', ({ mapId, doorId }: { mapId: number, doorId: number }) => {
+        campaignManager.toggleDoor(mapId, doorId);
     });
 
     socket.on('add-token', (data: { blueprintId: number, mapId: number, x: number, y: number }) => {

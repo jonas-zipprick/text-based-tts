@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import { parseDocument, YAMLMap, YAMLSeq, isCollection } from 'yaml';
-import { Campaign, Token, Wall, Light, MapData } from '../../shared';
+import { Campaign, Token, Wall, Light, MapData, Door } from '../../shared';
 import chokidar from 'chokidar';
 
 export class CampaignManager {
@@ -434,6 +434,108 @@ export class CampaignManager {
             }
         } catch (e) {
             console.error(`Error removing light:`, e);
+        }
+    }
+
+    public addDoors(mapId: number, newDoors: Door[]) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) return;
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) return;
+
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
+            if (mapItem) {
+                if (!mapItem.has('doors')) mapItem.set('doors', new YAMLSeq());
+                const doorsSeq = mapItem.get('doors') as YAMLSeq;
+
+                // Find current max ID across all doors in the campaign for this map
+                const currentMap = this.currentCampaign?.maps.find(m => m.id === mapId);
+                let maxId = currentMap?.doors?.reduce((max, d) => Math.max(max, d.id), 0) || 0;
+
+                newDoors.forEach(d => {
+                    maxId++;
+                    const doorMap = new YAMLMap();
+                    doorMap.set('id', maxId);
+                    const startMap = new YAMLMap();
+                    startMap.set('x', Math.round(d.start.x));
+                    startMap.set('y', Math.round(d.start.y));
+                    const endMap = new YAMLMap();
+                    endMap.set('x', Math.round(d.end.x));
+                    endMap.set('y', Math.round(d.end.y));
+                    doorMap.set('start', startMap);
+                    doorMap.set('end', endMap);
+                    doorMap.set('open', d.open || false);
+                    doorsSeq.add(doorMap);
+                });
+                fs.writeFileSync(filePath, doc.toString());
+            }
+        } catch (e) {
+            console.error(`Error adding doors:`, e);
+        }
+    }
+
+    public removeDoor(mapId: number, doorToRemove: Door) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) return;
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) return;
+
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
+            if (mapItem) {
+                const doors = mapItem.get('doors') as YAMLSeq;
+                if (!doors || !isCollection(doors)) return;
+
+                const indexToRemove = doors.items.findIndex((item: unknown) => {
+                    const d = (item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id;
+                    return d === doorToRemove.id;
+                });
+
+                if (indexToRemove !== -1) {
+                    doors.delete(indexToRemove);
+                    fs.writeFileSync(filePath, doc.toString());
+                }
+            }
+        } catch (e) {
+            console.error(`Error removing door:`, e);
+        }
+    }
+
+    public toggleDoor(mapId: number, doorId: number) {
+        const filePath = this.mapSourceMap.get(mapId);
+        if (!filePath) return;
+
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const doc = parseDocument(content);
+            const maps = doc.get('maps') as YAMLSeq;
+            if (!maps) return;
+
+            const mapItem = maps.items.find((item: unknown) => ((item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id) === mapId) as YAMLMap;
+            if (mapItem) {
+                const doors = mapItem.get('doors') as YAMLSeq;
+                if (!doors || !isCollection(doors)) return;
+
+                const doorItem = doors.items.find((item: unknown) => {
+                    const id = (item as { get?: (s: string) => unknown, id?: number }).get ? (item as { get: (s: string) => unknown }).get('id') : (item as { id: number }).id;
+                    return id === doorId;
+                }) as YAMLMap;
+
+                if (doorItem) {
+                    const isOpen = doorItem.get('open');
+                    doorItem.set('open', !isOpen);
+                    fs.writeFileSync(filePath, doc.toString());
+                }
+            }
+        } catch (e) {
+            console.error(`Error toggling door:`, e);
         }
     }
 
