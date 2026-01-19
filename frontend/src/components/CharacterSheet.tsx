@@ -152,6 +152,7 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({ token, onClose, 
 
     const handleHpKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
+            e.preventDefault();
             handleHpSubmit();
         }
     };

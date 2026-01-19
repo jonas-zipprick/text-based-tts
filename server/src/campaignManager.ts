@@ -363,7 +363,6 @@ export class CampaignManager {
                     lightMap.set('x', l.x);
                     lightMap.set('y', l.y);
                     lightMap.set('radius', l.radius);
-                    lightMap.set('color', l.color);
                     lightsSeq.add(lightMap);
                 });
                 fs.writeFileSync(filePath, doc.toString());
