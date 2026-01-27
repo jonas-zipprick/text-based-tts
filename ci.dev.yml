@@ -1,0 +1,42 @@
+schemaVersion: v0.2
+prepare:
+  steps:
+    - name: ""
+      command: sudo n 24.11.1
+    - command: npm install
+    - command: cd server && npm run build
+    - name: ""
+      command: cd frontend && npm run build
+test:
+  steps: []
+run:
+  server:
+    steps:
+      - command: sudo n 24.11.1
+      - command: cd server && npm run start
+    healthEndpoint: http://localhost:3000/api/campaign
+    plan: 20
+    replicas: 1
+    network:
+      ports:
+        - port: 3000
+          isPublic: false
+      paths:
+        - port: 3000
+          path: /server
+          stripPath: true
+    env: {}
+  frontend:
+    steps:
+      - command: sudo n 24.11.1
+      - command: cd frontend && npm run dev
+    plan: 20
+    replicas: 1
+    network:
+      ports:
+        - port: 3000
+          isPublic: false
+      paths:
+        - port: 3000
+          path: /
+    env: {}

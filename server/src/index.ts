@@ -18,12 +18,13 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
+const campaignDir = path.join(__dirname, '../../../../campaign'); // Go up to root/campaign
+
 // Serve static assets
-app.use('/assets', express.static(path.join(__dirname, '../../campaign/assets')));
+app.use('/assets', express.static(path.join(campaignDir, 'assets')));
 
 
 // Initialize Campaign Manager
-const campaignDir = path.join(__dirname, '../../campaign'); // Go up to root/campaign
 const campaignManager = new CampaignManager(campaignDir);
 campaignManager.loadCampaign();
 

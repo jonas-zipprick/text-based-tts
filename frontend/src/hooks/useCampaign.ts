@@ -23,7 +23,7 @@ export function useCampaign() {
             });
 
         // Socket connection
-        const newSocket = io(`${document.location.protocol}://${document.location.host}/server`);
+        const newSocket = io(`${document.location.host}`, {path: "/server/socket.io"});
         // socket is already initialized in state, we don't need to call setSocket(newSocket)
         // if we just use it for the listeners here and then clean up.
         // Actually, we DO need it in state for return, but calling it synchronously
