@@ -41,7 +41,7 @@ type MouseCoords = {
     distance?: number;
 } | null;
 
-const URL_PREFIX = 'http://localhost:3000/assets/';
+const URL_PREFIX = '/server/assets/';
 
 const BackgroundImage = ({ src, width, height }: { src: string, width: number, height: number }) => {
     const [image] = useImage(src);
